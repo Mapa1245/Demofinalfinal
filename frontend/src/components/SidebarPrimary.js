@@ -51,7 +51,7 @@ const SidebarPrimary = () => {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 bg-gradient-to-br from-pink-300 to-pink-400 p-3 rounded-xl shadow-lg text-white"
+        className="lg:hidden fixed top-4 left-4 z-50 bg-gradient-to-br from-orange-400 to-orange-500 p-3 rounded-xl shadow-lg text-white"
       >
         {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
       </button>
@@ -65,7 +65,7 @@ const SidebarPrimary = () => {
       )}
 
       {/* Sidebar */}
-      <div className={`fixed left-0 top-0 h-screen w-64 gradient-sidebar-pastel shadow-2xl z-50 flex flex-col transition-transform duration-300 ${
+      <div className={`fixed left-0 top-0 h-screen w-64 gradient-sidebar-orange shadow-2xl z-50 flex flex-col transition-transform duration-300 ${
         isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}>
         {/* Logo */}
