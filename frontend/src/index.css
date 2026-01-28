@@ -73,6 +73,15 @@
         font-family: 'Fredoka', sans-serif;
     }
     
+    /* Colores pastel suaves para nivel primario */
+    .gradient-pink-pastel {
+        background: linear-gradient(135deg, #FFC0CB 0%, #FFB6D9 100%);
+    }
+    
+    .gradient-sidebar-pastel {
+        background: linear-gradient(180deg, #F8B4D9 0%, #F5A3D0 100%);
+    }
+    
     .gradient-pink {
         background: linear-gradient(135deg, #EC4899 0%, #F43F5E 100%);
     }
