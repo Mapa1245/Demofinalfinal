@@ -89,7 +89,7 @@ const SidebarPrimary = () => {
                 data-testid={`sidebar-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl mb-2 transition-all duration-200 ${
                   isActive
-                    ? 'bg-white text-pink-600 font-bold shadow-lg'
+                    ? 'bg-white text-orange-600 font-bold shadow-lg'
                     : 'text-white hover:bg-white/10 hover:text-white'
                 }`}
               >
