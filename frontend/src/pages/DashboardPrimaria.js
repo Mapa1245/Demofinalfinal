@@ -31,21 +31,24 @@ const DashboardPrimaria = () => {
       label: 'Misiones Completadas',
       value: projects.length,
       icon: Target,
-      color: 'bg-gradient-to-br from-green-400 to-green-600',
+      color: 'bg-gradient-to-br from-green-200 to-green-300',
+      textColor: 'text-green-800',
       emoji: '🎯'
     },
     {
       label: 'Logros Desbloqueados',
       value: achievements,
       icon: Trophy,
-      color: 'bg-gradient-to-br from-yellow-400 to-orange-500',
+      color: 'bg-gradient-to-br from-yellow-200 to-yellow-300',
+      textColor: 'text-yellow-800',
       emoji: '🏆'
     },
     {
       label: 'Insignias Obtenidas',
       value: badges,
       icon: Award,
-      color: 'bg-gradient-to-br from-purple-400 to-pink-500',
+      color: 'bg-gradient-to-br from-purple-200 to-pink-200',
+      textColor: 'text-purple-800',
       emoji: '🎖️'
     }
   ];
