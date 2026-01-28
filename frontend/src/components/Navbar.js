@@ -7,7 +7,7 @@ const Navbar = ({ projectName, educationLevel }) => {
 
   const getLevelBadge = () => {
     const colors = {
-      primario: 'bg-blue-100 text-blue-700',
+      primario: 'bg-orange-100 text-orange-700',
       secundario: 'bg-purple-100 text-purple-700',
       superior: 'bg-gray-800 text-white'
     };
@@ -15,12 +15,12 @@ const Navbar = ({ projectName, educationLevel }) => {
     return (
       <span className={`px-2 sm:px-3 lg:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-bold ${colors[educationLevel] || colors.secundario}`}>
         <span className="hidden sm:inline">
-          {educationLevel === 'primario' && '🔵 Nivel Primario'}
+          {educationLevel === 'primario' && '🟠 Nivel Primario'}
           {educationLevel === 'secundario' && '🟣 Nivel Secundario'}
           {educationLevel === 'superior' && '⚫ Nivel Superior'}
         </span>
         <span className="sm:hidden">
-          {educationLevel === 'primario' && '🔵'}
+          {educationLevel === 'primario' && '🟠'}
           {educationLevel === 'secundario' && '🟣'}
           {educationLevel === 'superior' && '⚫'}
         </span>
