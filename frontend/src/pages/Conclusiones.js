@@ -1,0 +1,148 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import remarkGfm from 'remark-gfm';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
+import { FileText, Sparkles, Download as DownloadIcon } from 'lucide-react';
+import SidebarPrimary from '../components/SidebarPrimary';
+import Navbar from '../components/Navbar';
+import { Button } from '../components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { toast } from 'sonner';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
+const Conclusiones = () => {
+  const [projects, setProjects] = useState([]);
+  const [selectedProject, setSelectedProject] = useState('');
+  const [report, setReport] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    loadProjects();
+  }, []);
+
+  const loadProjects = async () => {
+    try {
+      const response = await axios.get(`${API}/projects`);
+      const primaryProjects = response.data.filter(p => p.educationLevel === 'primario');
+      setProjects(primaryProjects);
+      if (primaryProjects.length > 0) {
+        setSelectedProject(primaryProjects[0].id);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const generateReport = async () => {
+    if (!selectedProject) {
+      toast.error('¡Elegí una misión primero!');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await axios.post(
+        `${API}/reports/generate?project_id=${selectedProject}&education_level=primario`
+      );
+      setReport(response.data.report);
+      toast.success('¡Reporte generado! 🎉');
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Error al generar el reporte');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+      <SidebarPrimary />
+      
+      <div className="flex-1 ml-64">
+        <Navbar projectName="Conclusiones" educationLevel="primario" />
+        
+        <div className="p-8">
+          <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-3xl p-8 mb-8 text-white shadow-2xl">
+            <h1 className="text-5xl font-heading font-black mb-2 flex items-center gap-3">
+              <FileText className="w-12 h-12" />
+              ¡Conclusiones!
+            </h1>
+            <p className="text-2xl font-accent">Profe Marce te ayuda a entender qué significan los datos</p>
+          </div>
+
+          {/* Project Selector */}
+          {projects.length > 0 && (
+            <div className="bg-white rounded-3xl p-6 mb-6 border-4 border-purple-200">
+              <label className="text-xl font-bold mb-3 block">Elegí tu Misión:</label>
+              <div className="flex gap-4">
+                <Select value={selectedProject} onValueChange={setSelectedProject} className="flex-1">
+                  <SelectTrigger className="text-lg">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {projects.map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  onClick={generateReport}
+                  disabled={loading}
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-full px-8 py-3 text-lg font-bold"
+                >
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  {loading ? 'Generando...' : '¡Generar Conclusiones!'}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Report Display */}
+          {!report && !loading && (
+            <div className="bg-white rounded-3xl p-12 text-center border-4 border-purple-200">
+              <div className="text-8xl mb-4">🧠</div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-3">¡Generá tus conclusiones!</h3>
+              <p className="text-xl text-gray-600">Profe Marce va a analizar tus datos y explicarte qué significan</p>
+            </div>
+          )}
+
+          {loading && (
+            <div className="bg-white rounded-3xl p-12 text-center border-4 border-purple-200">
+              <div className="text-8xl mb-4 animate-bounce">✨</div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-3">Profe Marce está analizando...</h3>
+              <div className="flex justify-center gap-2">
+                <div className="w-3 h-3 bg-purple-500 rounded-full animate-bounce" />
+                <div className="w-3 h-3 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                <div className="w-3 h-3 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
+              </div>
+            </div>
+          )}
+
+          {report && (
+            <div className="bg-white rounded-3xl p-8 border-4 border-green-200">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="text-6xl">🎯</div>
+                <h2 className="text-3xl font-bold text-gray-800">Reporte de Profe Marce</h2>
+              </div>
+              <div className="prose prose-lg max-w-none">
+                <ReactMarkdown
+                  remarkPlugins={[remarkMath, remarkGfm]}
+                  rehypePlugins={[rehypeKatex]}
+                >
+                  {report}
+                </ReactMarkdown>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Conclusiones;
