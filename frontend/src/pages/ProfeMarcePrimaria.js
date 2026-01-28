@@ -86,7 +86,7 @@ const ProfeMarcePrimaria = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
+    <div className="flex min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-amber-50">
       <SidebarPrimary />
       
       <div className="flex-1 lg:ml-64 w-full">
@@ -94,7 +94,7 @@ const ProfeMarcePrimaria = () => {
         
         <div className="p-4 sm:p-6 h-[calc(100vh-64px)] flex flex-col">
           {/* Header */}
-          <div className="bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300 rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-4 sm:mb-6 text-white shadow-xl">
+          <div className="bg-gradient-to-r from-orange-300 via-amber-300 to-yellow-300 rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-4 sm:mb-6 text-white shadow-xl">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 text-center sm:text-left">
                 <img 
@@ -127,7 +127,7 @@ const ProfeMarcePrimaria = () => {
                   key={idx}
                   onClick={() => sendMessage(q)}
                   disabled={loading}
-                  className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white border-2 border-pink-200 rounded-full text-xs sm:text-sm font-medium text-pink-700 hover:bg-pink-50 hover:border-pink-300 transition-all disabled:opacity-50"
+                  className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white border-2 border-orange-200 rounded-full text-xs sm:text-sm font-medium text-orange-700 hover:bg-orange-50 hover:border-orange-300 transition-all disabled:opacity-50"
                 >
                   {q}
                 </button>
@@ -136,7 +136,7 @@ const ProfeMarcePrimaria = () => {
           </div>
 
           {/* Chat Messages */}
-          <div className="flex-1 bg-white rounded-2xl sm:rounded-3xl border-2 sm:border-4 border-pink-200 overflow-hidden flex flex-col">
+          <div className="flex-1 bg-white rounded-2xl sm:rounded-3xl border-2 sm:border-4 border-orange-200 overflow-hidden flex flex-col">
             <div className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 space-y-3 sm:space-y-4">
               {messages.map((msg, idx) => (
                 <div
@@ -146,8 +146,8 @@ const ProfeMarcePrimaria = () => {
                   <div
                     className={`max-w-[85%] sm:max-w-[80%] rounded-2xl sm:rounded-3xl p-3 sm:p-4 ${
                       msg.role === 'user'
-                        ? 'bg-gradient-to-r from-pink-300 to-purple-300 text-white rounded-br-none'
-                        : 'bg-purple-50 border-2 border-purple-200 rounded-bl-none'
+                        ? 'bg-gradient-to-r from-orange-300 to-amber-300 text-white rounded-br-none'
+                        : 'bg-amber-50 border-2 border-amber-200 rounded-bl-none'
                     }`}
                   >
                     {msg.role === 'assistant' && (
@@ -157,7 +157,7 @@ const ProfeMarcePrimaria = () => {
                           alt="Profe Marce" 
                           className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover"
                         />
-                        <span className="font-bold text-purple-900 text-sm sm:text-base">Profe Marce</span>
+                        <span className="font-bold text-orange-900 text-sm sm:text-base">Profe Marce</span>
                       </div>
                     )}
                     <div className={`prose prose-sm sm:prose-lg max-w-none ${msg.role === 'user' ? 'text-white' : 'text-gray-800'}`}>
@@ -178,18 +178,18 @@ const ProfeMarcePrimaria = () => {
               
               {loading && (
                 <div className="flex justify-start">
-                  <div className="bg-purple-50 border-2 border-purple-200 rounded-2xl sm:rounded-3xl rounded-bl-none p-3 sm:p-4">
+                  <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl sm:rounded-3xl rounded-bl-none p-3 sm:p-4">
                     <div className="flex items-center gap-2">
                       <img 
                         src="/profemarce.png" 
                         alt="Profe Marce" 
                         className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover"
                       />
-                      <span className="font-bold text-purple-900 text-sm sm:text-base">Profe Marce está escribiendo</span>
+                      <span className="font-bold text-orange-900 text-sm sm:text-base">Profe Marce está escribiendo</span>
                       <div className="flex gap-1">
-                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-purple-500 rounded-full animate-bounce" />
-                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-orange-500 rounded-full animate-bounce" />
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
                       </div>
                     </div>
                   </div>
@@ -198,21 +198,21 @@ const ProfeMarcePrimaria = () => {
             </div>
 
             {/* Input */}
-            <div className="p-3 sm:p-4 border-t-2 sm:border-t-4 border-pink-100 bg-pink-50">
+            <div className="p-3 sm:p-4 border-t-2 sm:border-t-4 border-orange-100 bg-orange-50">
               <div className="flex gap-2 sm:gap-3">
                 <Input
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && !loading && sendMessage()}
                   placeholder="Escribí tu pregunta acá..."
-                  className="flex-1 text-sm sm:text-base lg:text-lg rounded-full border-2 border-pink-300 focus:border-pink-400 py-4 sm:py-5 lg:py-6"
+                  className="flex-1 text-sm sm:text-base lg:text-lg rounded-full border-2 border-orange-300 focus:border-orange-400 py-4 sm:py-5 lg:py-6"
                   disabled={loading}
                   data-testid="chat-input"
                 />
                 <Button
                   onClick={() => sendMessage()}
                   disabled={loading || !inputMessage.trim()}
-                  className="bg-gradient-to-r from-pink-400 to-purple-400 hover:from-pink-500 hover:to-purple-500 text-white rounded-full px-4 sm:px-6 lg:px-8 shadow-lg disabled:opacity-50"
+                  className="bg-gradient-to-r from-orange-400 to-amber-400 hover:from-orange-500 hover:to-amber-500 text-white rounded-full px-4 sm:px-6 lg:px-8 shadow-lg disabled:opacity-50"
                   data-testid="send-button"
                 >
                   <Send className="w-4 h-4 sm:w-5 sm:h-5" />
