@@ -33,7 +33,63 @@ const Misiones = () => {
     }
   };
 
-  const exampleMissions = [
+  const importMission = async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      try {
+        const text = await file.text();
+        const importedData = JSON.parse(text);
+        
+        // Validar estructura
+        if (!importedData.project || !importedData.datasets) {
+          toast.error('Archivo inválido');
+          return;
+        }
+        
+        toast.info('Importando misión...');
+        
+        // Crear proyecto
+        const projectRes = await axios.post(`${API}/projects`, {
+          name: importedData.project.name + ' (Importado)',
+          description: importedData.project.description,
+          educationLevel: 'primario'
+        });
+        
+        const newProjectId = projectRes.data.id;
+        
+        // Importar datasets
+        for (const dataset of importedData.datasets) {
+          await axios.post(`${API}/datasets`, {
+            projectId: newProjectId,
+            name: dataset.name,
+            variables: dataset.variables
+          });
+        }
+        
+        toast.success('¡Misión importada exitosamente!');
+        trackProjectCreated();
+        
+        // Recargar proyectos
+        await loadProjects();
+        
+        // Guardar como proyecto actual
+        localStorage.setItem('currentProjectId', newProjectId);
+        window.dispatchEvent(new CustomEvent('projectChanged', { detail: newProjectId }));
+        
+      } catch (error) {
+        console.error('Error:', error);
+        toast.error('Error al importar misión');
+      }
+    };
+    
+    input.click();
+  };
     {
       id: 'mundial_2026_cualitativo',
       title: '⚽ Mundial 2026: Países Favoritos',
