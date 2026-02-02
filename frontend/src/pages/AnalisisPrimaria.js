@@ -40,6 +40,9 @@ const AnalisisPrimaria = () => {
     try {
       const response = await axios.get(`${API}/datasets/${projectId}`);
       setDatasets(response.data);
+      // Reiniciar estadísticas al cambiar de proyecto
+      setStatistics(null);
+      setFrequencyTable([]);
       if (response.data.length > 0) {
         calculateFrequencyTable(response.data[0]);
       }
