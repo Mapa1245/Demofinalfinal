@@ -160,6 +160,8 @@ const Descargar = () => {
 
   const handleProjectChange = (projectId) => {
     setSelectedProject(projectId);
+    localStorage.setItem('currentProjectId', projectId);
+    window.dispatchEvent(new CustomEvent('projectChanged', { detail: projectId }));
     loadProjectData(projectId);
   };
 
