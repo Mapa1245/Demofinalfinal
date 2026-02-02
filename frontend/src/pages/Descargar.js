@@ -70,6 +70,29 @@ const Descargar = () => {
 
   useEffect(() => {
     loadProjects();
+    
+    // Escuchar cambios de proyecto
+    const handleStorageChange = (e) => {
+      if (e.key === 'currentProjectId' && e.newValue) {
+        setSelectedProject(e.newValue);
+        loadProjectData(e.newValue);
+      }
+    };
+    
+    const handleProjectChange = (e) => {
+      if (e.detail && e.detail !== selectedProject) {
+        setSelectedProject(e.detail);
+        loadProjectData(e.detail);
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('projectChanged', handleProjectChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('projectChanged', handleProjectChange);
+    };
   }, []);
 
   const loadProjects = async () => {
