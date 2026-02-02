@@ -191,7 +191,7 @@ const GraficosPrimaria = () => {
     <div className="flex min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
       <SidebarPrimary />
       
-      <div className="flex-1 ml-64">
+      <div className="flex-1 lg:ml-64 w-full">
         <Navbar projectName="Mis Gráficos" educationLevel="primario" />
         
         <div className="p-8">
