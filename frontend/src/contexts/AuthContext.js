@@ -9,6 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Auto-login con usuario demo en localStorage
     const storedUser = localStorage.getItem('demo_user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
