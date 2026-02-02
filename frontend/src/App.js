@@ -58,6 +58,7 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <div className="App">
+          <OfflineIndicator />
           <Toaster position="top-right" richColors />
           <Routes>
             <Route path="/" element={<Home />} />
