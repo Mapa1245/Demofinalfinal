@@ -289,20 +289,87 @@ const Descargar = () => {
         yPosition += 18;
 
         pdf.setTextColor(0, 0, 0);
-        pdf.setFontSize(10);
-        pdf.setFont('helvetica', 'normal');
 
-        const cleanReport = cleanTextForPDF(conclusions);
-        const reportLines = pdf.splitTextToSize(cleanReport, pageWidth - 40);
-        
-        reportLines.forEach(line => {
-          if (yPosition > pageHeight - 15) {
-            pdf.addPage();
-            yPosition = 20;
+        // Capturar conclusiones con LaTeX renderizado
+        if (conclusionsRef.current) {
+          try {
+            const conclusionsCanvas = await html2canvas(conclusionsRef.current, {
+              scale: 2,
+              backgroundColor: '#ffffff',
+              logging: false,
+              useCORS: true
+            });
+            
+            const conclusionsImgData = conclusionsCanvas.toDataURL('image/png');
+            const conclusionsImgWidth = pageWidth - 40;
+            const conclusionsImgHeight = (conclusionsCanvas.height * conclusionsImgWidth) / conclusionsCanvas.width;
+            
+            // Dividir en páginas si es necesario
+            let remainingHeight = conclusionsImgHeight;
+            let sourceY = 0;
+            
+            while (remainingHeight > 0) {
+              const availableHeight = pageHeight - yPosition - 15;
+              const heightToAdd = Math.min(remainingHeight, availableHeight);
+              
+              if (heightToAdd > 0) {
+                pdf.addImage(
+                  conclusionsImgData,
+                  'PNG',
+                  20,
+                  yPosition,
+                  conclusionsImgWidth,
+                  heightToAdd,
+                  undefined,
+                  'FAST',
+                  0,
+                  sourceY
+                );
+              }
+              
+              remainingHeight -= heightToAdd;
+              sourceY += heightToAdd;
+              
+              if (remainingHeight > 0) {
+                pdf.addPage();
+                yPosition = 20;
+              } else {
+                yPosition += heightToAdd + 10;
+              }
+            }
+          } catch (conclusionsError) {
+            console.error('Error capturando conclusiones:', conclusionsError);
+            // Fallback a texto plano
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'normal');
+            const cleanReport = cleanTextForPDF(conclusions);
+            const reportLines = pdf.splitTextToSize(cleanReport, pageWidth - 40);
+            
+            reportLines.forEach(line => {
+              if (yPosition > pageHeight - 15) {
+                pdf.addPage();
+                yPosition = 20;
+              }
+              pdf.text(line, 20, yPosition);
+              yPosition += 5;
+            });
           }
-          pdf.text(line, 20, yPosition);
-          yPosition += 5;
-        });
+        } else {
+          // Si no hay ref, usar texto plano
+          pdf.setFontSize(10);
+          pdf.setFont('helvetica', 'normal');
+          const cleanReport = cleanTextForPDF(conclusions);
+          const reportLines = pdf.splitTextToSize(cleanReport, pageWidth - 40);
+          
+          reportLines.forEach(line => {
+            if (yPosition > pageHeight - 15) {
+              pdf.addPage();
+              yPosition = 20;
+            }
+            pdf.text(line, 20, yPosition);
+            yPosition += 5;
+          });
+        }
       }
 
       // Footer
