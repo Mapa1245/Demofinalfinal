@@ -198,8 +198,12 @@ Estoy acá para ayudarte a entender conceptos estadísticos, resolver dudas sobr
               
               {loading && (
                 <div className="flex gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
-                    <span className="text-lg">👩‍🏫</span>
+                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center">
+                    <img 
+                      src="/profemarce.png" 
+                      alt="Profe Marce" 
+                      className="w-full h-full rounded-full object-cover"
+                    />
                   </div>
                   <div className="bg-purple-50 rounded-2xl px-4 py-3">
                     <div className="flex items-center gap-2">
