@@ -61,8 +61,10 @@ const GraficosPrimaria = () => {
         setSelectedProject(currentProjectId);
         loadDatasets(currentProjectId);
       } else if (primaryProjects.length > 0) {
-        setSelectedProject(primaryProjects[0].id);
-        loadDatasets(primaryProjects[0].id);
+        const firstProject = primaryProjects[0].id;
+        setSelectedProject(firstProject);
+        localStorage.setItem('currentProjectId', firstProject);
+        loadDatasets(firstProject);
       }
     } catch (error) {
       console.error('Error:', error);
