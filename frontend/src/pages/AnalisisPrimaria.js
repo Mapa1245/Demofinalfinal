@@ -21,7 +21,7 @@ const AnalisisPrimaria = () => {
   useEffect(() => {
     loadProjects();
     
-    // Escuchar cambios en el proyecto seleccionado desde otras páginas
+    // Escuchar cambios en el proyecto seleccionado desde otras páginas (storage event)
     const handleStorageChange = (e) => {
       if (e.key === 'currentProjectId' && e.newValue) {
         setSelectedProject(e.newValue);
@@ -29,10 +29,20 @@ const AnalisisPrimaria = () => {
       }
     };
     
+    // Escuchar cambios en la misma pestaña (custom event)
+    const handleProjectChange = (e) => {
+      if (e.detail && e.detail !== selectedProject) {
+        setSelectedProject(e.detail);
+        loadDatasets(e.detail);
+      }
+    };
+    
     window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('projectChanged', handleProjectChange);
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('projectChanged', handleProjectChange);
     };
   }, []);
 
