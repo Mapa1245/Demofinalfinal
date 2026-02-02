@@ -20,6 +20,20 @@ const AnalisisPrimaria = () => {
 
   useEffect(() => {
     loadProjects();
+    
+    // Escuchar cambios en el proyecto seleccionado desde otras páginas
+    const handleStorageChange = (e) => {
+      if (e.key === 'currentProjectId' && e.newValue) {
+        setSelectedProject(e.newValue);
+        loadDatasets(e.newValue);
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const loadProjects = async () => {
