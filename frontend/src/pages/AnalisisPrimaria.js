@@ -127,7 +127,8 @@ const AnalisisPrimaria = () => {
     setSpeaking(true);
     let text = '';
 
-    if (statistics.type === 'qualitative') {
+    // Construir texto basado en las estadísticas disponibles
+    if (statistics.mode && !statistics.mean) {
       text = `La moda es ${statistics.mode}. Esto significa que ${statistics.mode} es el valor que más se repite en los datos.`;
     } else {
       text = `La media es ${statistics.mean?.toFixed(2)}. La mediana es ${statistics.median}. La moda es ${statistics.mode}. El rango es ${statistics.range}.`;
