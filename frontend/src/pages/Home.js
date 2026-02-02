@@ -111,9 +111,36 @@ const Home = () => {
             <p className="text-xl sm:text-2xl text-pink-700 font-medium mb-2">
               CRM Analítico Educativo
             </p>
-            <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto px-4">
+            <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto px-4 mb-6">
               Pensar con datos, decidir con criterio
             </p>
+
+            {/* Install Button */}
+            {!isInstalled && (
+              <div className="flex justify-center">
+                <button
+                  onClick={handleInstallClick}
+                  disabled={!isInstallable}
+                  className={`inline-flex items-center gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg shadow-xl transition-all duration-300 ${
+                    isInstallable 
+                      ? 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white hover:scale-105 cursor-pointer'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
+                >
+                  <Download className="w-5 h-5 sm:w-6 sm:h-6" />
+                  {isInstallable ? '¡Instalar EstadísticaMente!' : 'App instalable en Chrome/Edge'}
+                </button>
+              </div>
+            )}
+
+            {isInstalled && (
+              <div className="flex justify-center">
+                <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-green-100 text-green-700 font-bold">
+                  <span className="text-2xl">✅</span>
+                  <span>App instalada correctamente</span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Level Selection Cards */}
