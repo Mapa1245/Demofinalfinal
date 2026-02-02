@@ -106,6 +106,13 @@ const DashboardSecundario = () => {
       color: 'from-pink-500 to-rose-600'
     },
     {
+      icon: Gamepad2,
+      title: 'Actividades Interactivas',
+      description: 'Ejercicios prácticos y simulaciones',
+      path: '/actividades-secundario',
+      color: 'from-orange-500 to-red-600'
+    },
+    {
       icon: MessageCircle,
       title: 'Profe Marce',
       description: 'Tu asistente de estadística con IA',
