@@ -46,12 +46,8 @@ import ActividadesSuperior from './pages/ActividadesSuperior';
 import './App.css';
 
 const ProtectedRoute = ({ children }) => {
-  const { user } = useAuth();
-  
-  if (!user) {
-    return <Navigate to="/" replace />;
-  }
-  
+  // Función mantenida para uso futuro
+  // Por ahora, todas las rutas son accesibles sin autenticación
   return children;
 };
 
