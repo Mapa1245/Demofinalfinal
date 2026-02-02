@@ -765,35 +765,42 @@ const AnalisisSuperior = () => {
                     </div>
 
                     {frequencyTable.length > 0 && (
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-xs">
-                          <thead>
-                            <tr className="bg-emerald-100">
-                              <th className="px-2 py-2 text-left">{freqTableType === 'agrupada' ? 'Intervalo' : 'Valor'}</th>
-                              {freqTableType === 'agrupada' && <th className="px-2 py-2">xi</th>}
-                              <th className="px-2 py-2">fi</th>
-                              <th className="px-2 py-2">fri</th>
-                              <th className="px-2 py-2">%</th>
-                              <th className="px-2 py-2">Fi</th>
-                              <th className="px-2 py-2">Fri</th>
-                              <th className="px-2 py-2">%Ac</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {frequencyTable.map((row, idx) => (
-                              <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-emerald-50'}>
-                                <td className="px-2 py-1 font-medium">{freqTableType === 'agrupada' ? row.intervalo : row.valor}</td>
-                                {freqTableType === 'agrupada' && <td className="px-2 py-1 text-center">{row.xi}</td>}
-                                <td className="px-2 py-1 text-center font-bold text-emerald-600">{row.fi}</td>
-                                <td className="px-2 py-1 text-center">{row.fri.toFixed(4)}</td>
-                                <td className="px-2 py-1 text-center">{row.pi.toFixed(2)}%</td>
-                                <td className="px-2 py-1 text-center font-bold text-teal-600">{row.Fi}</td>
-                                <td className="px-2 py-1 text-center">{row.Fri.toFixed(4)}</td>
-                                <td className="px-2 py-1 text-center">{row.Pi.toFixed(2)}%</td>
+                      <div className="border border-emerald-200 rounded-xl overflow-hidden">
+                        <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+                          <table className="w-full text-xs">
+                            <thead className="sticky top-0 bg-emerald-100 z-10">
+                              <tr>
+                                <th className="px-2 py-2 text-left">{freqTableType === 'agrupada' ? 'Intervalo' : 'Valor'}</th>
+                                {freqTableType === 'agrupada' && <th className="px-2 py-2">xi</th>}
+                                <th className="px-2 py-2">fi</th>
+                                <th className="px-2 py-2">fri</th>
+                                <th className="px-2 py-2">%</th>
+                                <th className="px-2 py-2">Fi</th>
+                                <th className="px-2 py-2">Fri</th>
+                                <th className="px-2 py-2">%Ac</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                            </thead>
+                            <tbody>
+                              {frequencyTable.map((row, idx) => (
+                                <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-emerald-50'}>
+                                  <td className="px-2 py-1 font-medium">{freqTableType === 'agrupada' ? row.intervalo : row.valor}</td>
+                                  {freqTableType === 'agrupada' && <td className="px-2 py-1 text-center">{row.xi}</td>}
+                                  <td className="px-2 py-1 text-center font-bold text-emerald-600">{row.fi}</td>
+                                  <td className="px-2 py-1 text-center">{row.fri.toFixed(4)}</td>
+                                  <td className="px-2 py-1 text-center">{row.pi.toFixed(2)}%</td>
+                                  <td className="px-2 py-1 text-center font-bold text-teal-600">{row.Fi}</td>
+                                  <td className="px-2 py-1 text-center">{row.Fri.toFixed(4)}</td>
+                                  <td className="px-2 py-1 text-center">{row.Pi.toFixed(2)}%</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        {frequencyTable.length > 10 && (
+                          <div className="bg-emerald-50 px-4 py-2 text-xs text-center text-emerald-700 border-t border-emerald-200">
+                            📊 Mostrando {frequencyTable.length} filas - Deslizá para ver más
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
