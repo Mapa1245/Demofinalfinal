@@ -304,7 +304,7 @@ const CargaDatosSuperior = () => {
     <div className="flex min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
       <SidebarSuperior />
       
-      <div className="flex-1 ml-64">
+      <div className="flex-1 lg:ml-64 w-full">
         <Navbar projectName={currentProject?.name || 'Cargar Datos'} educationLevel="superior" />
         
         <div className="p-8">
