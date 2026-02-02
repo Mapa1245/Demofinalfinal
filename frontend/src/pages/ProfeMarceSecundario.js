@@ -118,9 +118,11 @@ Estoy acá para ayudarte a entender conceptos estadísticos, resolver dudas sobr
           {/* Header */}
           <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 rounded-2xl p-4 mb-4 text-white shadow-xl flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center">
-                <span className="text-3xl">👩‍🏫</span>
-              </div>
+              <img 
+                src="/profemarce.png" 
+                alt="Profe Marce" 
+                className="w-14 h-14 rounded-full object-cover bg-white p-1"
+              />
               <div>
                 <h1 className="text-2xl font-heading font-bold">Profe Marce</h1>
                 <p className="text-purple-200 text-sm">Tu asistente de estadística con IA</p>
