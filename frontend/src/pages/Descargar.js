@@ -100,9 +100,16 @@ const Descargar = () => {
       const response = await axios.get(`${API}/projects`);
       const primaryProjects = response.data.filter(p => p.educationLevel === 'primario');
       setProjects(primaryProjects);
-      if (primaryProjects.length > 0) {
-        setSelectedProject(primaryProjects[0].id);
-        loadProjectData(primaryProjects[0].id);
+      
+      const currentProjectId = localStorage.getItem('currentProjectId');
+      if (currentProjectId && primaryProjects.find(p => p.id === currentProjectId)) {
+        setSelectedProject(currentProjectId);
+        loadProjectData(currentProjectId);
+      } else if (primaryProjects.length > 0) {
+        const firstProject = primaryProjects[0].id;
+        setSelectedProject(firstProject);
+        localStorage.setItem('currentProjectId', firstProject);
+        loadProjectData(firstProject);
       }
     } catch (error) {
       console.error('Error:', error);
