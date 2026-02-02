@@ -190,7 +190,13 @@ const AnalisisPrimaria = () => {
           {projects.length > 0 && (
             <div className="bg-white rounded-3xl p-6 mb-6 border-4 border-blue-200">
               <label className="text-xl font-bold mb-3 block">Elegí tu Misión:</label>
-              <Select value={selectedProject} onValueChange={(id) => { setSelectedProject(id); loadDatasets(id); }}>
+              <Select value={selectedProject} onValueChange={(id) => { 
+                setSelectedProject(id); 
+                localStorage.setItem('currentProjectId', id);
+                // Disparar evento personalizado para otras pestañas
+                window.dispatchEvent(new CustomEvent('projectChanged', { detail: id }));
+                loadDatasets(id); 
+              }}>
                 <SelectTrigger className="text-lg">
                   <SelectValue />
                 </SelectTrigger>
