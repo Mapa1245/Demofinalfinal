@@ -1,10 +1,7 @@
 import React from 'react';
 import { Bell, User } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
 
 const Navbar = ({ projectName, educationLevel }) => {
-  const { user } = useAuth();
-
   const getLevelBadge = () => {
     const colors = {
       primario: 'bg-orange-100 text-orange-700',
@@ -52,8 +49,8 @@ const Navbar = ({ projectName, educationLevel }) => {
             <User className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </div>
           <div className="text-xs sm:text-sm hidden md:block">
-            <p className="font-bold text-pink-900 truncate max-w-[150px]">{user?.email || 'Usuario'}</p>
-            <p className="text-pink-600 text-xs">Estudiante</p>
+            <p className="font-bold text-pink-900 truncate max-w-[150px]">Mi Máquina</p>
+            <p className="text-pink-600 text-xs">Uso Local</p>
           </div>
         </div>
       </div>
