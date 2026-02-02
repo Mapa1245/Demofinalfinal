@@ -60,6 +60,7 @@ function App() {
       <BrowserRouter>
         <div className="App">
           <OfflineIndicator />
+          <InstallPWA />
           <Toaster position="top-right" richColors />
           <Routes>
             <Route path="/" element={<Home />} />
