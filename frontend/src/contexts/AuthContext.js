@@ -42,8 +42,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    setUser(null);
-    localStorage.removeItem('demo_user');
+    // Al hacer logout, simplemente redirige al home
     return Promise.resolve();
   };
 
