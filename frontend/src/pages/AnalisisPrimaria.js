@@ -41,9 +41,18 @@ const AnalisisPrimaria = () => {
       const response = await axios.get(`${API}/projects`);
       const primaryProjects = response.data.filter(p => p.educationLevel === 'primario');
       setProjects(primaryProjects);
-      if (primaryProjects.length > 0) {
-        setSelectedProject(primaryProjects[0].id);
-        loadDatasets(primaryProjects[0].id);
+      
+      // Verificar si hay un proyecto guardado en localStorage
+      const savedProjectId = localStorage.getItem('currentProjectId');
+      
+      if (savedProjectId && primaryProjects.find(p => p.id === savedProjectId)) {
+        setSelectedProject(savedProjectId);
+        loadDatasets(savedProjectId);
+      } else if (primaryProjects.length > 0) {
+        const firstProject = primaryProjects[0].id;
+        setSelectedProject(firstProject);
+        localStorage.setItem('currentProjectId', firstProject);
+        loadDatasets(firstProject);
       }
     } catch (error) {
       console.error('Error:', error);
