@@ -441,6 +441,74 @@ const Descargar = () => {
     toast.success('Proyecto exportado!');
   };
 
+  const importProject = async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      try {
+        const text = await file.text();
+        const importedData = JSON.parse(text);
+        
+        // Validar estructura
+        if (!importedData.project || !importedData.datasets) {
+          toast.error('Archivo inválido');
+          return;
+        }
+        
+        toast.info('Importando proyecto...');
+        
+        // Crear proyecto
+        const projectRes = await axios.post(`${API}/projects`, {
+          name: importedData.project.name + ' (Importado)',
+          description: importedData.project.description,
+          educationLevel: 'primario'
+        });
+        
+        const newProjectId = projectRes.data.id;
+        
+        // Importar datasets
+        for (const dataset of importedData.datasets) {
+          await axios.post(`${API}/datasets`, {
+            projectId: newProjectId,
+            name: dataset.name,
+            variables: dataset.variables
+          });
+        }
+        
+        // Importar estadísticas si existen
+        if (importedData.statistics && importedData.statistics.length > 0) {
+          for (const stat of importedData.statistics) {
+            await axios.post(`${API}/statistics`, {
+              projectId: newProjectId,
+              variableName: stat.variableName,
+              ...stat
+            });
+          }
+        }
+        
+        toast.success('¡Proyecto importado exitosamente!');
+        
+        // Recargar proyectos y seleccionar el nuevo
+        await loadProjects();
+        setSelectedProject(newProjectId);
+        localStorage.setItem('currentProjectId', newProjectId);
+        window.dispatchEvent(new CustomEvent('projectChanged', { detail: newProjectId }));
+        loadProjectData(newProjectId);
+        
+      } catch (error) {
+        console.error('Error:', error);
+        toast.error('Error al importar proyecto');
+      }
+    };
+    
+    input.click();
+  };
+
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-teal-50 via-blue-50 to-purple-50">
       <SidebarPrimary />
