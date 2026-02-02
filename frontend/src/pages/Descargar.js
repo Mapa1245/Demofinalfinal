@@ -492,7 +492,7 @@ const Descargar = () => {
                 <div>
                   <h3 className="text-lg font-bold text-yellow-800">Queres agregar conclusiones al PDF?</h3>
                   <p className="text-yellow-700">
-                    Anda a <strong>"Conclusiones"</strong> en el menu y pedile a Profe Marce que analice tus datos.
+                    Anda a <strong>&quot;Conclusiones&quot;</strong> en el menu y pedile a Profe Marce que analice tus datos.
                   </p>
                 </div>
               </div>
