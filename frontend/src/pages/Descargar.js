@@ -7,7 +7,7 @@ import remarkMath from 'remark-math';
 import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
-import { Download, FileText, Save, Loader } from 'lucide-react';
+import { Download, FileText, Save, Loader, Upload } from 'lucide-react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import SidebarPrimary from '../components/SidebarPrimary';
 import Navbar from '../components/Navbar';
