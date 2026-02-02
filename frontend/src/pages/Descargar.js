@@ -66,6 +66,7 @@ const Descargar = () => {
   const [conclusions, setConclusions] = useState('');
   const [chartData, setChartData] = useState([]);
   const chartRef = useRef(null);
+  const conclusionsRef = useRef(null);
 
   useEffect(() => {
     loadProjects();
