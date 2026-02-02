@@ -95,7 +95,7 @@ Utilizaré notación matemática formal ($\\LaTeX$) cuando sea necesario para ma
     <div className="flex min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
       <SidebarSuperior />
       
-      <div className="flex-1 ml-64 flex flex-col h-screen">
+      <div className="flex-1 lg:ml-64 flex flex-col h-screen">
         <Navbar projectName="Profe Marce" educationLevel="superior" />
         
         <div className="flex-1 flex flex-col p-6 overflow-hidden">
