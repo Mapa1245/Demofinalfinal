@@ -111,7 +111,7 @@ Estoy acá para ayudarte a entender conceptos estadísticos, resolver dudas sobr
     <div className="flex min-h-screen bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50">
       <SidebarSecundario />
       
-      <div className="flex-1 ml-64 flex flex-col h-screen">
+      <div className="flex-1 lg:ml-64 flex flex-col h-screen">
         <Navbar projectName="Profe Marce" educationLevel="secundario" />
         
         <div className="flex-1 flex flex-col p-6 overflow-hidden">
