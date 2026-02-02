@@ -31,6 +31,7 @@ import AnalisisSecundario from './pages/AnalisisSecundario';
 import ReportesSecundario from './pages/ReportesSecundario';
 import ProfeMarceSecundario from './pages/ProfeMarceSecundario';
 import DescargarSecundario from './pages/DescargarSecundario';
+import ActividadesSecundario from './pages/ActividadesSecundario';
 
 // Superior pages
 import DashboardSuperior from './pages/DashboardSuperior';
