@@ -92,9 +92,10 @@ const AnalisisPrimaria = () => {
     const numericValues = values.filter(v => !isNaN(parseFloat(v))).map(v => parseFloat(v));
     
     if (numericValues.length === 0) {
-      toast.info('Estos datos son cualitativos. Solo podemos calcular la moda.');
+      // Para datos no numéricos, solo calculamos la moda
       const mode = getMostFrequent(values);
-      setStatistics({ mode, type: 'qualitative' });
+      setStatistics({ mode });
+      toast.success('¡Cálculo completado! 🎯');
       return;
     }
 
