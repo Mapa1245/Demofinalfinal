@@ -122,18 +122,26 @@ Utilizaré notación matemática formal ($\\LaTeX$) cuando sea necesario para ma
               {messages.map((msg, idx) => (
                 <div key={idx} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    msg.role === 'user' ? 'bg-emerald-600' : 'bg-gradient-to-br from-emerald-500 to-teal-600'
+                    msg.role === 'user' ? 'bg-emerald-600' : 'bg-white'
                   }`}>
-                    {msg.role === 'user' ? <User className="w-5 h-5 text-white" /> : <span className="text-lg">👩‍🏫</span>}
+                    {msg.role === 'user' ? (
+                      <User className="w-5 h-5 text-white" />
+                    ) : (
+                      <img 
+                        src="/profemarce.png" 
+                        alt="Profe Marce" 
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    )}
                   </div>
                   
                   <div className={`max-w-[75%] rounded-2xl px-4 py-3 ${
                     msg.role === 'user' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-gray-800'
                   }`}>
                     {msg.role === 'user' ? (
-                      <p className="whitespace-pre-wrap">{msg.content}</p>
+                      <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                     ) : (
-                      <div className="prose prose-sm max-w-none">
+                      <div className="prose prose-sm max-w-none prose-p:my-1 prose-p:leading-relaxed prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 break-words overflow-wrap-anywhere">
                         <ReactMarkdown
                           remarkPlugins={[remarkMath]}
                           rehypePlugins={[rehypeKatex]}
