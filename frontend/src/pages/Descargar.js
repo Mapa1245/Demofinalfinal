@@ -600,7 +600,7 @@ const Descargar = () => {
           )}
 
           {/* Download Options */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-white rounded-3xl p-8 border-4 border-red-200 hover:border-red-400 transition-all hover:scale-105">
               <div className="text-7xl mb-4 text-center">📝</div>
               <h3 className="text-2xl font-bold text-gray-800 text-center mb-4">Descargar PDF</h3>
@@ -641,6 +641,20 @@ const Descargar = () => {
               >
                 <Save className="w-5 h-5 mr-2" />
                 Exportar Proyecto
+              </Button>
+            </div>
+
+            <div className="bg-white rounded-3xl p-8 border-4 border-blue-200 hover:border-blue-400 transition-all hover:scale-105">
+              <div className="text-7xl mb-4 text-center">📂</div>
+              <h3 className="text-2xl font-bold text-gray-800 text-center mb-4">Importar Proyecto</h3>
+              <p className="text-gray-600 text-center mb-6">Carga un proyecto guardado anteriormente</p>
+              <Button
+                onClick={importProject}
+                className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-full py-4 text-lg font-bold"
+                data-testid="import-project-btn"
+              >
+                <Upload className="w-5 h-5 mr-2" />
+                Importar Proyecto
               </Button>
             </div>
           </div>
