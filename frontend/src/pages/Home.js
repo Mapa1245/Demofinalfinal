@@ -69,31 +69,31 @@ const Home = () => {
           </div>
 
           {/* Level Selection Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12 lg:mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12 lg:mb-16">
             {levels.map((level) => (
               <button
                 key={level.id}
                 onClick={() => handleLevelSelect(level.id)}
                 data-testid={level.testId}
-                className="group relative bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl hover:shadow-pink-500/20 transition-all duration-300 transform hover:-translate-y-2 border-2 border-pink-100 hover:border-pink-300"
+                className="group relative bg-white rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-2xl hover:shadow-pink-500/20 transition-all duration-300 transform hover:-translate-y-2 border-2 border-pink-100 hover:border-pink-300"
               >
                 <div className="text-center">
-                  <div className="text-4xl sm:text-5xl lg:text-6xl mb-3 sm:mb-4">{level.icon}</div>
-                  <h2 className="text-xl sm:text-2xl font-heading font-bold text-pink-900 mb-2 sm:mb-3">
+                  <div className="text-3xl sm:text-4xl mb-2 sm:mb-3">{level.icon}</div>
+                  <h2 className="text-lg sm:text-xl font-heading font-bold text-pink-900 mb-1 sm:mb-2">
                     {level.title}
                   </h2>
-                  <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">{level.description}</p>
+                  <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">{level.description}</p>
                   
-                  <div className="space-y-1.5 sm:space-y-2 mb-4 sm:mb-6">
+                  <div className="space-y-1 mb-3 sm:mb-4">
                     {level.features.map((feature, idx) => (
-                      <div key={idx} className="flex items-center justify-center gap-2 text-xs sm:text-sm text-gray-700">
-                        <div className="w-1.5 h-1.5 rounded-full bg-pink-400 flex-shrink-0" />
+                      <div key={idx} className="flex items-center justify-center gap-1.5 text-xs text-gray-700">
+                        <div className="w-1 h-1 rounded-full bg-pink-400 flex-shrink-0" />
                         <span>{feature}</span>
                       </div>
                     ))}
                   </div>
 
-                  <div className={`inline-block px-6 sm:px-8 py-2.5 sm:py-3 rounded-full bg-gradient-to-r ${level.color} text-white font-bold text-base sm:text-lg shadow-lg group-hover:shadow-xl transition-shadow`}>
+                  <div className={`inline-block px-4 sm:px-6 py-2 rounded-full bg-gradient-to-r ${level.color} text-white font-bold text-sm sm:text-base shadow-lg group-hover:shadow-xl transition-shadow`}>
                     Comenzar
                   </div>
                 </div>
