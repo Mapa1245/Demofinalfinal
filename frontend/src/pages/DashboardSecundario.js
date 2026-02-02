@@ -9,7 +9,8 @@ import {
   Database,
   Calculator,
   BookOpen,
-  MessageCircle
+  MessageCircle,
+  Gamepad2
 } from 'lucide-react';
 import SidebarSecundario from '../components/SidebarSecundario';
 import Navbar from '../components/Navbar';
