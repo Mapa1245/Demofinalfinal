@@ -3,14 +3,14 @@ import {
   Gamepad2, Play, RefreshCw, CheckCircle, XCircle, TrendingUp,
   Target, Dice6, Calculator, BarChart3, Percent
 } from 'lucide-react';
-import SidebarSuperior from '../components/SidebarSuperior';
+import SidebarSecundario from '../components/SidebarSecundario';
 import Navbar from '../components/Navbar';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
 
-const ActividadesSuperior = () => {
+const ActividadesSecundario = () => {
   const [activeActivity, setActiveActivity] = useState(null);
   const [score, setScore] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
@@ -28,7 +28,7 @@ const ActividadesSuperior = () => {
       title: 'Simulación del Teorema Central del Límite',
       description: 'Visualizá cómo la distribución de medias muestrales tiende a la normalidad',
       icon: BarChart3,
-      color: 'from-emerald-500 to-teal-500'
+      color: 'from-purple-500 to-indigo-500'
     },
     {
       id: 'hypothesis_test',
@@ -236,8 +236,8 @@ const ActividadesSuperior = () => {
     switch (activeActivity) {
       case 'clt_simulation':
         return (
-          <div className="bg-white rounded-2xl p-6 border border-emerald-100">
-            <h3 className="text-xl font-bold text-emerald-900 mb-4">Simulación del Teorema Central del Límite</h3>
+          <div className="bg-white rounded-2xl p-6 border border-purple-100">
+            <h3 className="text-xl font-bold text-purple-900 mb-4">Simulación del Teorema Central del Límite</h3>
             <p className="text-gray-600 mb-6">
               Generamos muestras de una distribución uniforme y calculamos sus medias. 
               Observá cómo la distribución de medias se aproxima a una normal.
@@ -263,7 +263,7 @@ const ActividadesSuperior = () => {
                 />
               </div>
               <div className="flex items-end">
-                <Button onClick={runCLTSimulation} className="bg-emerald-600 hover:bg-emerald-700">
+                <Button onClick={runCLTSimulation} className="bg-purple-600 hover:bg-purple-700">
                   <Play className="w-4 h-4 mr-2" />
                   Ejecutar
                 </Button>
@@ -271,13 +271,13 @@ const ActividadesSuperior = () => {
             </div>
 
             {simulationData.histogram && (
-              <div className="bg-emerald-50 rounded-xl p-4">
-                <h4 className="font-bold text-emerald-900 mb-4">Distribución de Medias Muestrales</h4>
+              <div className="bg-purple-50 rounded-xl p-4">
+                <h4 className="font-bold text-purple-900 mb-4">Distribución de Medias Muestrales</h4>
                 <div className="flex items-end gap-1 h-40">
                   {simulationData.histogram.map((count, idx) => (
                     <div
                       key={idx}
-                      className="bg-emerald-500 rounded-t flex-1"
+                      className="bg-purple-500 rounded-t flex-1"
                       style={{ height: `${(count / Math.max(...simulationData.histogram)) * 100}%` }}
                       title={`Frecuencia: ${count}`}
                     />
@@ -288,7 +288,7 @@ const ActividadesSuperior = () => {
                   <span>Media de medias: {(simulationData.results.reduce((a,b)=>a+b,0)/simulationData.results.length).toFixed(4)}</span>
                   <span>{simulationData.maxVal?.toFixed(3)}</span>
                 </div>
-                <p className="text-sm text-emerald-800 mt-4">
+                <p className="text-sm text-purple-800 mt-4">
                   Teoría: Para U(0,1), la media poblacional = 0.5. Con n={simulationData.n} muestras, 
                   la distribución de medias debería aproximarse a N(0.5, σ/√n)
                 </p>
@@ -299,8 +299,8 @@ const ActividadesSuperior = () => {
 
       case 'hypothesis_test':
         return (
-          <div className="bg-white rounded-2xl p-6 border border-emerald-100">
-            <h3 className="text-xl font-bold text-emerald-900 mb-4">Pruebas de Hipótesis</h3>
+          <div className="bg-white rounded-2xl p-6 border border-purple-100">
+            <h3 className="text-xl font-bold text-purple-900 mb-4">Pruebas de Hipótesis</h3>
             <p className="text-gray-600 mb-6">
               Dado un p-valor y nivel de significancia, decidí si rechazás o no la hipótesis nula.
             </p>
@@ -345,8 +345,8 @@ const ActividadesSuperior = () => {
 
       case 'regression_game':
         return (
-          <div className="bg-white rounded-2xl p-6 border border-emerald-100">
-            <h3 className="text-xl font-bold text-emerald-900 mb-4">Estimación de Regresión</h3>
+          <div className="bg-white rounded-2xl p-6 border border-purple-100">
+            <h3 className="text-xl font-bold text-purple-900 mb-4">Estimación de Regresión</h3>
             <p className="text-gray-600 mb-6">
               Observá los puntos y estimá la pendiente (β₁) y ordenada al origen (β₀) de la recta de regresión.
             </p>
@@ -417,8 +417,8 @@ const ActividadesSuperior = () => {
 
       case 'correlation_game':
         return (
-          <div className="bg-white rounded-2xl p-6 border border-emerald-100">
-            <h3 className="text-xl font-bold text-emerald-900 mb-4">Adivinar la Correlación</h3>
+          <div className="bg-white rounded-2xl p-6 border border-purple-100">
+            <h3 className="text-xl font-bold text-purple-900 mb-4">Adivinar la Correlación</h3>
             <p className="text-gray-600 mb-6">
               Estimá el coeficiente de correlación (r) observando el gráfico de dispersión. Rango: -1 a 1.
             </p>
@@ -481,8 +481,8 @@ const ActividadesSuperior = () => {
 
       case 'confidence_interval':
         return (
-          <div className="bg-white rounded-2xl p-6 border border-emerald-100">
-            <h3 className="text-xl font-bold text-emerald-900 mb-4">Intervalos de Confianza</h3>
+          <div className="bg-white rounded-2xl p-6 border border-purple-100">
+            <h3 className="text-xl font-bold text-purple-900 mb-4">Intervalos de Confianza</h3>
             <p className="text-gray-600 mb-6">
               Calculá el intervalo de confianza al 95% para la media. Fórmula: x̄ ± z·SE donde z = 1.96
             </p>
@@ -512,7 +512,7 @@ const ActividadesSuperior = () => {
                     />
                   </div>
                   <div>
-                    <Label>Límite superior</Label>
+                    <Label>Límite secundario</Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -548,26 +548,26 @@ const ActividadesSuperior = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
-      <SidebarSuperior />
+    <div className="flex min-h-screen bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50">
+      <SidebarSecundario />
       
       <div className="flex-1 ml-64">
-        <Navbar projectName="Actividades Interactivas" educationLevel="superior" />
+        <Navbar projectName="Actividades Interactivas" educationLevel="secundario" />
         
         <div className="p-6">
-          <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 rounded-3xl p-6 mb-6 text-white shadow-xl">
+          <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 rounded-3xl p-6 mb-6 text-white shadow-xl">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-heading font-bold mb-2 flex items-center gap-3">
                   <Gamepad2 className="w-8 h-8" />
                   Actividades Interactivas
                 </h1>
-                <p className="text-emerald-100">
+                <p className="text-purple-100">
                   Simulaciones y ejercicios prácticos para reforzar conceptos estadísticos
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-emerald-200 text-sm">Puntuación</p>
+                <p className="text-purple-200 text-sm">Puntuación</p>
                 <p className="text-3xl font-bold">{score}/{totalQuestions}</p>
               </div>
             </div>
@@ -581,12 +581,12 @@ const ActividadesSuperior = () => {
                   <div
                     key={activity.id}
                     onClick={() => setActiveActivity(activity.id)}
-                    className="bg-white rounded-2xl p-6 border border-emerald-100 hover:shadow-xl transition-all cursor-pointer group"
+                    className="bg-white rounded-2xl p-6 border border-purple-100 hover:shadow-xl transition-all cursor-pointer group"
                   >
                     <div className={`w-14 h-14 rounded-2xl bg-gradient-to-r ${activity.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
                       <Icon className="w-7 h-7 text-white" />
                     </div>
-                    <h3 className="text-xl font-bold text-emerald-900 mb-2">{activity.title}</h3>
+                    <h3 className="text-xl font-bold text-purple-900 mb-2">{activity.title}</h3>
                     <p className="text-gray-600 text-sm">{activity.description}</p>
                   </div>
                 );
@@ -597,7 +597,7 @@ const ActividadesSuperior = () => {
               <Button
                 onClick={() => setActiveActivity(null)}
                 variant="outline"
-                className="mb-6 border-emerald-300 text-emerald-700"
+                className="mb-6 border-purple-300 text-purple-700"
               >
                 ← Volver a actividades
               </Button>
@@ -610,4 +610,4 @@ const ActividadesSuperior = () => {
   );
 };
 
-export default ActividadesSuperior;
+export default ActividadesSecundario;
