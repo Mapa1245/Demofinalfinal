@@ -26,6 +26,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
+    // Mantener la función para uso futuro pero no requerida ahora
     const demoUser = {
       email: email,
       uid: 'demo_user_' + Date.now(),
