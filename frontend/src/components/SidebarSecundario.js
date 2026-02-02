@@ -26,6 +26,7 @@ const SidebarSecundario = () => {
     { icon: BarChart3, label: 'Gráficos', path: '/graficos-secundario' },
     { icon: Calculator, label: 'Análisis', path: '/analisis-secundario' },
     { icon: FileText, label: 'Reportes IA', path: '/reportes-secundario' },
+    { icon: Gamepad2, label: 'Actividades', path: '/actividades-secundario' },
     { icon: MessageCircle, label: 'Profe Marce', path: '/profe-marce-secundario' },
     { icon: Download, label: 'Descargar', path: '/descargar-secundario' }
   ];
