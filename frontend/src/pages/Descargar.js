@@ -471,7 +471,7 @@ const Descargar = () => {
                 <div className="text-5xl">🎯</div>
                 <h3 className="text-xl font-bold text-gray-800">Conclusiones de Profe Marce</h3>
               </div>
-              <div className="bg-purple-50 rounded-2xl p-4 max-h-64 overflow-y-auto prose prose-purple max-w-none">
+              <div ref={conclusionsRef} className="bg-purple-50 rounded-2xl p-4 max-h-64 overflow-y-auto prose prose-purple max-w-none">
                 <ReactMarkdown
                   remarkPlugins={[remarkMath, remarkGfm]}
                   rehypePlugins={[rehypeKatex]}
