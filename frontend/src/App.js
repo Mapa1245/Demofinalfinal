@@ -201,6 +201,14 @@ function App() {
               }
             />
             <Route
+              path="/actividades-secundario"
+              element={
+                <ProtectedRoute>
+                  <ActividadesSecundario />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/descargar-secundario"
               element={
                 <ProtectedRoute>
