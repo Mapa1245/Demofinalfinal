@@ -510,19 +510,19 @@ const Descargar = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-teal-50 via-blue-50 to-purple-50">
+    <div className="flex min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-amber-50">
       <SidebarPrimary />
       
-      <div className="flex-1 ml-64">
+      <div className="flex-1 lg:ml-64 w-full">
         <Navbar projectName="Descargar" educationLevel="primario" />
         
-        <div className="p-8">
-          <div className="bg-gradient-to-r from-teal-500 via-blue-500 to-purple-500 rounded-3xl p-8 mb-8 text-white shadow-2xl">
-            <h1 className="text-5xl font-heading font-black mb-2 flex items-center gap-3">
-              <Download className="w-12 h-12" />
+        <div className="p-4 sm:p-6 lg:p-8">
+          <div className="bg-gradient-to-r from-orange-300 via-amber-300 to-yellow-300 rounded-2xl sm:rounded-3xl p-6 sm:p-8 mb-6 sm:mb-8 text-white shadow-2xl">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-black mb-2 flex items-center gap-3">
+              <Download className="w-10 h-10 sm:w-12 sm:h-12" />
               Descargar
             </h1>
-            <p className="text-2xl font-accent">Guarda tus trabajos y compartilos</p>
+            <p className="text-lg sm:text-xl lg:text-2xl font-accent">Guarda tus trabajos y compartilos</p>
           </div>
 
           {/* Project Selector */}
