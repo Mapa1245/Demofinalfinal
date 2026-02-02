@@ -150,12 +150,16 @@ Estoy acá para ayudarte a entender conceptos estadísticos, resolver dudas sobr
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                     msg.role === 'user' 
                       ? 'bg-purple-600' 
-                      : 'bg-gradient-to-br from-purple-500 to-indigo-600'
+                      : 'bg-white'
                   }`}>
                     {msg.role === 'user' ? (
                       <User className="w-5 h-5 text-white" />
                     ) : (
-                      <span className="text-lg">👩‍🏫</span>
+                      <img 
+                        src="/profemarce.png" 
+                        alt="Profe Marce" 
+                        className="w-full h-full rounded-full object-cover"
+                      />
                     )}
                   </div>
                   
@@ -165,9 +169,9 @@ Estoy acá para ayudarte a entender conceptos estadísticos, resolver dudas sobr
                       : 'bg-purple-50 text-gray-800'
                   }`}>
                     {msg.role === 'user' ? (
-                      <p className="whitespace-pre-wrap">{msg.content}</p>
+                      <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                     ) : (
-                      <div className="prose prose-sm max-w-none">
+                      <div className="prose prose-sm max-w-none prose-p:my-1 prose-p:leading-relaxed prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 break-words overflow-wrap-anywhere">
                         <ReactMarkdown
                           remarkPlugins={[remarkMath]}
                           rehypePlugins={[rehypeKatex]}
