@@ -165,8 +165,12 @@ Utilizaré notación matemática formal ($\\LaTeX$) cuando sea necesario para ma
               
               {loading && (
                 <div className="flex gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
-                    <span className="text-lg">👩‍🏫</span>
+                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center">
+                    <img 
+                      src="/profemarce.png" 
+                      alt="Profe Marce" 
+                      className="w-full h-full rounded-full object-cover"
+                    />
                   </div>
                   <div className="bg-emerald-50 rounded-2xl px-4 py-3">
                     <div className="flex items-center gap-2">
