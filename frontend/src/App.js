@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import OfflineIndicator from './components/OfflineIndicator';
+import InstallPWA from './components/InstallPWA';
 
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
