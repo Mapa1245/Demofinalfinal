@@ -104,7 +104,7 @@ const AnalisisPrimaria = () => {
         `${API}/statistics/calculate?projectId=${selectedProject}&variableName=valor`,
         numericValues
       );
-      setStatistics({ ...response.data, type: 'quantitative' });
+      setStatistics(response.data);
       toast.success('¡Cálculos completados! 🎯');
     } catch (error) {
       console.error('Error:', error);
