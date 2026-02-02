@@ -251,7 +251,7 @@ const Misiones = () => {
           </div>
 
           {/* Create New Mission Button */}
-          <div className="mb-8">
+          <div className="mb-8 flex flex-wrap gap-4">
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
               <DialogTrigger asChild>
                 <Button className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white rounded-full px-8 py-4 text-xl font-bold">
@@ -282,6 +282,14 @@ const Misiones = () => {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            
+            <Button 
+              onClick={importMission}
+              className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-full px-8 py-4 text-xl font-bold"
+            >
+              <Upload className="w-6 h-6 mr-2" />
+              ¡Importar Misión!
+            </Button>
           </div>
 
           {/* Example Missions */}
