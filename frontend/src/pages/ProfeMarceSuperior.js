@@ -101,9 +101,11 @@ Utilizaré notación matemática formal ($\\LaTeX$) cuando sea necesario para ma
         <div className="flex-1 flex flex-col p-6 overflow-hidden">
           <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 rounded-2xl p-4 mb-4 text-white shadow-xl flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center">
-                <span className="text-3xl">👩‍🏫</span>
-              </div>
+              <img 
+                src="/profemarce.png" 
+                alt="Profe Marce" 
+                className="w-14 h-14 rounded-full object-cover bg-white p-1"
+              />
               <div>
                 <h1 className="text-2xl font-heading font-bold">Profe Marce - Nivel Superior</h1>
                 <p className="text-emerald-200 text-sm">Asistente de estadística avanzada</p>
