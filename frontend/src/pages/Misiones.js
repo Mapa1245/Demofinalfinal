@@ -90,6 +90,8 @@ const Misiones = () => {
     
     input.click();
   };
+
+  const exampleMissions = [
     {
       id: 'mundial_2026_cualitativo',
       title: '⚽ Mundial 2026: Países Favoritos',
