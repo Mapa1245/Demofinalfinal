@@ -1,62 +1,22 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext } from 'react';
 
 const AuthContext = createContext({});
 
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Auto-login con usuario demo en localStorage
-    const storedUser = localStorage.getItem('demo_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    } else {
-      const demoUser = {
-        email: 'estudiante@estadisticamente.com',
-        uid: 'demo_user_123',
-        displayName: 'Estudiante Demo'
-      };
-      setUser(demoUser);
-      localStorage.setItem('demo_user', JSON.stringify(demoUser));
-    }
-    setLoading(false);
-  }, []);
-
-  const login = async (email, password) => {
-    // Mantener la función para uso futuro pero no requerida ahora
-    const demoUser = {
-      email: email,
-      uid: 'demo_user_' + Date.now(),
-      displayName: email.split('@')[0]
-    };
-    setUser(demoUser);
-    localStorage.setItem('demo_user', JSON.stringify(demoUser));
-    return Promise.resolve(demoUser);
-  };
-
-  const register = async (email, password) => {
-    return login(email, password);
-  };
-
-  const logout = async () => {
-    // Al hacer logout, simplemente redirige al home
-    return Promise.resolve();
-  };
-
+  // Sin sistema de usuarios - todo es local
   const value = {
-    user,
-    loading,
-    login,
-    register,
-    logout
+    user: null,
+    loading: false,
+    login: async () => Promise.resolve(),
+    register: async () => Promise.resolve(),
+    logout: async () => Promise.resolve()
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };
