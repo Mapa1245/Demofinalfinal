@@ -1,61 +1,27 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 
 const AuthContext = createContext({});
 
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
   useEffect(() => {
-    const storedUser = localStorage.getItem('demo_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    } else {
-      const demoUser = {
-        email: 'estudiante@estadisticamente.com',
-        uid: 'demo_user_123',
-        displayName: 'Estudiante Demo'
-      };
-      setUser(demoUser);
-      localStorage.setItem('demo_user', JSON.stringify(demoUser));
-    }
-    setLoading(false);
+    // Limpiar cualquier dato de usuario del localStorage
+    localStorage.removeItem('demo_user');
   }, []);
 
-  const login = async (email, password) => {
-    const demoUser = {
-      email: email,
-      uid: 'demo_user_' + Date.now(),
-      displayName: email.split('@')[0]
-    };
-    setUser(demoUser);
-    localStorage.setItem('demo_user', JSON.stringify(demoUser));
-    return Promise.resolve(demoUser);
-  };
-
-  const register = async (email, password) => {
-    return login(email, password);
-  };
-
-  const logout = async () => {
-    setUser(null);
-    localStorage.removeItem('demo_user');
-    return Promise.resolve();
-  };
-
+  // Sin sistema de usuarios - todo es local a la máquina
   const value = {
-    user,
-    loading,
-    login,
-    register,
-    logout
+    user: null,
+    loading: false,
+    login: async () => Promise.resolve(),
+    register: async () => Promise.resolve(),
+    logout: async () => Promise.resolve()
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };

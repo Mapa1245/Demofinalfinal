@@ -111,16 +111,18 @@ Estoy acá para ayudarte a entender conceptos estadísticos, resolver dudas sobr
     <div className="flex min-h-screen bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50">
       <SidebarSecundario />
       
-      <div className="flex-1 ml-64 flex flex-col h-screen">
+      <div className="flex-1 lg:ml-64 flex flex-col h-screen">
         <Navbar projectName="Profe Marce" educationLevel="secundario" />
         
         <div className="flex-1 flex flex-col p-6 overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 rounded-2xl p-4 mb-4 text-white shadow-xl flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center">
-                <span className="text-3xl">👩‍🏫</span>
-              </div>
+              <img 
+                src="/profemarce.png" 
+                alt="Profe Marce" 
+                className="w-14 h-14 rounded-full object-cover bg-white p-1"
+              />
               <div>
                 <h1 className="text-2xl font-heading font-bold">Profe Marce</h1>
                 <p className="text-purple-200 text-sm">Tu asistente de estadística con IA</p>
@@ -148,12 +150,16 @@ Estoy acá para ayudarte a entender conceptos estadísticos, resolver dudas sobr
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                     msg.role === 'user' 
                       ? 'bg-purple-600' 
-                      : 'bg-gradient-to-br from-purple-500 to-indigo-600'
+                      : 'bg-white'
                   }`}>
                     {msg.role === 'user' ? (
                       <User className="w-5 h-5 text-white" />
                     ) : (
-                      <span className="text-lg">👩‍🏫</span>
+                      <img 
+                        src="/profemarce.png" 
+                        alt="Profe Marce" 
+                        className="w-full h-full rounded-full object-cover"
+                      />
                     )}
                   </div>
                   
@@ -163,9 +169,9 @@ Estoy acá para ayudarte a entender conceptos estadísticos, resolver dudas sobr
                       : 'bg-purple-50 text-gray-800'
                   }`}>
                     {msg.role === 'user' ? (
-                      <p className="whitespace-pre-wrap">{msg.content}</p>
+                      <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                     ) : (
-                      <div className="prose prose-sm max-w-none">
+                      <div className="prose prose-sm max-w-none prose-p:my-1 prose-p:leading-relaxed prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 break-words overflow-wrap-anywhere">
                         <ReactMarkdown
                           remarkPlugins={[remarkMath]}
                           rehypePlugins={[rehypeKatex]}
@@ -192,8 +198,12 @@ Estoy acá para ayudarte a entender conceptos estadísticos, resolver dudas sobr
               
               {loading && (
                 <div className="flex gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
-                    <span className="text-lg">👩‍🏫</span>
+                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center">
+                    <img 
+                      src="/profemarce.png" 
+                      alt="Profe Marce" 
+                      className="w-full h-full rounded-full object-cover"
+                    />
                   </div>
                   <div className="bg-purple-50 rounded-2xl px-4 py-3">
                     <div className="flex items-center gap-2">

@@ -33,6 +33,64 @@ const Misiones = () => {
     }
   };
 
+  const importMission = async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      try {
+        const text = await file.text();
+        const importedData = JSON.parse(text);
+        
+        // Validar estructura
+        if (!importedData.project || !importedData.datasets) {
+          toast.error('Archivo inválido');
+          return;
+        }
+        
+        toast.info('Importando misión...');
+        
+        // Crear proyecto
+        const projectRes = await axios.post(`${API}/projects`, {
+          name: importedData.project.name + ' (Importado)',
+          description: importedData.project.description,
+          educationLevel: 'primario'
+        });
+        
+        const newProjectId = projectRes.data.id;
+        
+        // Importar datasets
+        for (const dataset of importedData.datasets) {
+          await axios.post(`${API}/datasets`, {
+            projectId: newProjectId,
+            name: dataset.name,
+            variables: dataset.variables
+          });
+        }
+        
+        toast.success('¡Misión importada exitosamente!');
+        trackProjectCreated();
+        
+        // Recargar proyectos
+        await loadProjects();
+        
+        // Guardar como proyecto actual
+        localStorage.setItem('currentProjectId', newProjectId);
+        window.dispatchEvent(new CustomEvent('projectChanged', { detail: newProjectId }));
+        
+      } catch (error) {
+        console.error('Error:', error);
+        toast.error('Error al importar misión');
+      }
+    };
+    
+    input.click();
+  };
+
   const exampleMissions = [
     {
       id: 'mundial_2026_cualitativo',
@@ -172,7 +230,7 @@ const Misiones = () => {
     <div className="flex min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
       <SidebarPrimary />
       
-      <div className="flex-1 ml-64">
+      <div className="flex-1 lg:ml-64 w-full">
         <Navbar projectName="Mis Misiones" educationLevel="primario" />
         
         <div className="p-8">
@@ -193,7 +251,7 @@ const Misiones = () => {
           </div>
 
           {/* Create New Mission Button */}
-          <div className="mb-8">
+          <div className="mb-8 flex flex-wrap gap-4">
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
               <DialogTrigger asChild>
                 <Button className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white rounded-full px-8 py-4 text-xl font-bold">
@@ -224,6 +282,14 @@ const Misiones = () => {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            
+            <Button 
+              onClick={importMission}
+              className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-full px-8 py-4 text-xl font-bold"
+            >
+              <Upload className="w-6 h-6 mr-2" />
+              ¡Importar Misión!
+            </Button>
           </div>
 
           {/* Example Missions */}

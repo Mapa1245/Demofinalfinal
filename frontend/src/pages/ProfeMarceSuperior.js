@@ -95,15 +95,17 @@ Utilizaré notación matemática formal ($\\LaTeX$) cuando sea necesario para ma
     <div className="flex min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
       <SidebarSuperior />
       
-      <div className="flex-1 ml-64 flex flex-col h-screen">
+      <div className="flex-1 lg:ml-64 flex flex-col h-screen">
         <Navbar projectName="Profe Marce" educationLevel="superior" />
         
         <div className="flex-1 flex flex-col p-6 overflow-hidden">
           <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 rounded-2xl p-4 mb-4 text-white shadow-xl flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center">
-                <span className="text-3xl">👩‍🏫</span>
-              </div>
+              <img 
+                src="/profemarce.png" 
+                alt="Profe Marce" 
+                className="w-14 h-14 rounded-full object-cover bg-white p-1"
+              />
               <div>
                 <h1 className="text-2xl font-heading font-bold">Profe Marce - Nivel Superior</h1>
                 <p className="text-emerald-200 text-sm">Asistente de estadística avanzada</p>
@@ -120,18 +122,26 @@ Utilizaré notación matemática formal ($\\LaTeX$) cuando sea necesario para ma
               {messages.map((msg, idx) => (
                 <div key={idx} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    msg.role === 'user' ? 'bg-emerald-600' : 'bg-gradient-to-br from-emerald-500 to-teal-600'
+                    msg.role === 'user' ? 'bg-emerald-600' : 'bg-white'
                   }`}>
-                    {msg.role === 'user' ? <User className="w-5 h-5 text-white" /> : <span className="text-lg">👩‍🏫</span>}
+                    {msg.role === 'user' ? (
+                      <User className="w-5 h-5 text-white" />
+                    ) : (
+                      <img 
+                        src="/profemarce.png" 
+                        alt="Profe Marce" 
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    )}
                   </div>
                   
                   <div className={`max-w-[75%] rounded-2xl px-4 py-3 ${
                     msg.role === 'user' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-gray-800'
                   }`}>
                     {msg.role === 'user' ? (
-                      <p className="whitespace-pre-wrap">{msg.content}</p>
+                      <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                     ) : (
-                      <div className="prose prose-sm max-w-none">
+                      <div className="prose prose-sm max-w-none prose-p:my-1 prose-p:leading-relaxed prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 break-words overflow-wrap-anywhere">
                         <ReactMarkdown
                           remarkPlugins={[remarkMath]}
                           rehypePlugins={[rehypeKatex]}
@@ -155,8 +165,12 @@ Utilizaré notación matemática formal ($\\LaTeX$) cuando sea necesario para ma
               
               {loading && (
                 <div className="flex gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
-                    <span className="text-lg">👩‍🏫</span>
+                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center">
+                    <img 
+                      src="/profemarce.png" 
+                      alt="Profe Marce" 
+                      className="w-full h-full rounded-full object-cover"
+                    />
                   </div>
                   <div className="bg-emerald-50 rounded-2xl px-4 py-3">
                     <div className="flex items-center gap-2">

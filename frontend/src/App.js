@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import OfflineIndicator from './components/OfflineIndicator';
+import InstallPWA from './components/InstallPWA';
 
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
@@ -31,6 +33,7 @@ import AnalisisSecundario from './pages/AnalisisSecundario';
 import ReportesSecundario from './pages/ReportesSecundario';
 import ProfeMarceSecundario from './pages/ProfeMarceSecundario';
 import DescargarSecundario from './pages/DescargarSecundario';
+import ActividadesSecundario from './pages/ActividadesSecundario';
 
 // Superior pages
 import DashboardSuperior from './pages/DashboardSuperior';
@@ -46,12 +49,8 @@ import ActividadesSuperior from './pages/ActividadesSuperior';
 import './App.css';
 
 const ProtectedRoute = ({ children }) => {
-  const { user } = useAuth();
-  
-  if (!user) {
-    return <Navigate to="/" replace />;
-  }
-  
+  // Función mantenida para uso futuro
+  // Por ahora, todas las rutas son accesibles sin autenticación
   return children;
 };
 
@@ -60,6 +59,8 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <div className="App">
+          <OfflineIndicator />
+          <InstallPWA />
           <Toaster position="top-right" richColors />
           <Routes>
             <Route path="/" element={<Home />} />
@@ -200,6 +201,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ProfeMarceSecundario />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/actividades-secundario"
+              element={
+                <ProtectedRoute>
+                  <ActividadesSecundario />
                 </ProtectedRoute>
               }
             />

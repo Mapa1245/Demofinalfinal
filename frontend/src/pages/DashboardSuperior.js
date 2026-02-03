@@ -120,10 +120,10 @@ const DashboardSuperior = () => {
     <div className="flex min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
       <SidebarSuperior />
       
-      <div className="flex-1 ml-64">
+      <div className="flex-1 lg:ml-64 w-full">
         <Navbar projectName="Mi Progreso en Estadística" educationLevel="superior" />
         
-        <div className="p-8">
+        <div className="p-4 sm:p-6 lg:p-8">
           {/* Welcome Section */}
           <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 rounded-3xl p-8 mb-8 text-white shadow-xl" data-testid="welcome-section">
             <div className="flex items-center justify-between">

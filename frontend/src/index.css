@@ -73,6 +73,15 @@
         font-family: 'Fredoka', sans-serif;
     }
     
+    /* Colores pastel naranjas para nivel primario */
+    .gradient-orange-pastel {
+        background: linear-gradient(135deg, #FFD4A3 0%, #FFB86C 100%);
+    }
+    
+    .gradient-sidebar-orange {
+        background: linear-gradient(180deg, #FFB86C 0%, #FFA347 100%);
+    }
+    
     .gradient-pink {
         background: linear-gradient(135deg, #EC4899 0%, #F43F5E 100%);
     }

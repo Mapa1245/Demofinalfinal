@@ -20,6 +20,30 @@ const AnalisisPrimaria = () => {
 
   useEffect(() => {
     loadProjects();
+    
+    // Escuchar cambios en el proyecto seleccionado desde otras páginas (storage event)
+    const handleStorageChange = (e) => {
+      if (e.key === 'currentProjectId' && e.newValue) {
+        setSelectedProject(e.newValue);
+        loadDatasets(e.newValue);
+      }
+    };
+    
+    // Escuchar cambios en la misma pestaña (custom event)
+    const handleProjectChange = (e) => {
+      if (e.detail && e.detail !== selectedProject) {
+        setSelectedProject(e.detail);
+        loadDatasets(e.detail);
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('projectChanged', handleProjectChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('projectChanged', handleProjectChange);
+    };
   }, []);
 
   const loadProjects = async () => {
@@ -27,9 +51,18 @@ const AnalisisPrimaria = () => {
       const response = await axios.get(`${API}/projects`);
       const primaryProjects = response.data.filter(p => p.educationLevel === 'primario');
       setProjects(primaryProjects);
-      if (primaryProjects.length > 0) {
-        setSelectedProject(primaryProjects[0].id);
-        loadDatasets(primaryProjects[0].id);
+      
+      // Verificar si hay un proyecto guardado en localStorage
+      const savedProjectId = localStorage.getItem('currentProjectId');
+      
+      if (savedProjectId && primaryProjects.find(p => p.id === savedProjectId)) {
+        setSelectedProject(savedProjectId);
+        loadDatasets(savedProjectId);
+      } else if (primaryProjects.length > 0) {
+        const firstProject = primaryProjects[0].id;
+        setSelectedProject(firstProject);
+        localStorage.setItem('currentProjectId', firstProject);
+        loadDatasets(firstProject);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -40,6 +73,9 @@ const AnalisisPrimaria = () => {
     try {
       const response = await axios.get(`${API}/datasets/${projectId}`);
       setDatasets(response.data);
+      // Reiniciar estadísticas al cambiar de proyecto
+      setStatistics(null);
+      setFrequencyTable([]);
       if (response.data.length > 0) {
         calculateFrequencyTable(response.data[0]);
       }
@@ -92,9 +128,10 @@ const AnalisisPrimaria = () => {
     const numericValues = values.filter(v => !isNaN(parseFloat(v))).map(v => parseFloat(v));
     
     if (numericValues.length === 0) {
-      toast.info('Estos datos son cualitativos. Solo podemos calcular la moda.');
+      // Para datos no numéricos, solo calculamos la moda
       const mode = getMostFrequent(values);
-      setStatistics({ mode, type: 'qualitative' });
+      setStatistics({ mode });
+      toast.success('¡Cálculo completado! 🎯');
       return;
     }
 
@@ -103,7 +140,7 @@ const AnalisisPrimaria = () => {
         `${API}/statistics/calculate?projectId=${selectedProject}&variableName=valor`,
         numericValues
       );
-      setStatistics({ ...response.data, type: 'quantitative' });
+      setStatistics(response.data);
       toast.success('¡Cálculos completados! 🎯');
     } catch (error) {
       console.error('Error:', error);
@@ -126,7 +163,8 @@ const AnalisisPrimaria = () => {
     setSpeaking(true);
     let text = '';
 
-    if (statistics.type === 'qualitative') {
+    // Construir texto basado en las estadísticas disponibles
+    if (statistics.mode && !statistics.mean) {
       text = `La moda es ${statistics.mode}. Esto significa que ${statistics.mode} es el valor que más se repite en los datos.`;
     } else {
       text = `La media es ${statistics.mean?.toFixed(2)}. La mediana es ${statistics.median}. La moda es ${statistics.mode}. El rango es ${statistics.range}.`;
@@ -143,26 +181,32 @@ const AnalisisPrimaria = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
+    <div className="flex min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-amber-50">
       <SidebarPrimary />
       
-      <div className="flex-1 ml-64">
+      <div className="flex-1 lg:ml-64 w-full">
         <Navbar projectName="Análisis de Datos" educationLevel="primario" />
         
-        <div className="p-8">
-          <div className="bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 rounded-3xl p-8 mb-8 text-white shadow-2xl">
-            <h1 className="text-5xl font-heading font-black mb-2 flex items-center gap-3">
-              <Calculator className="w-12 h-12" />
+        <div className="p-4 sm:p-6 lg:p-8">
+          <div className="bg-gradient-to-r from-orange-300 via-amber-300 to-yellow-300 rounded-2xl sm:rounded-3xl p-6 sm:p-8 mb-6 sm:mb-8 text-white shadow-2xl">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-black mb-2 flex items-center gap-3">
+              <Calculator className="w-10 h-10 sm:w-12 sm:h-12" />
               ¡Análisis!
             </h1>
-            <p className="text-2xl font-accent">Descubrí qué nos dicen los datos</p>
+            <p className="text-lg sm:text-xl lg:text-2xl font-accent">Descubrí qué nos dicen los datos</p>
           </div>
 
           {/* Project Selector */}
           {projects.length > 0 && (
             <div className="bg-white rounded-3xl p-6 mb-6 border-4 border-blue-200">
               <label className="text-xl font-bold mb-3 block">Elegí tu Misión:</label>
-              <Select value={selectedProject} onValueChange={(id) => { setSelectedProject(id); loadDatasets(id); }}>
+              <Select value={selectedProject} onValueChange={(id) => { 
+                setSelectedProject(id); 
+                localStorage.setItem('currentProjectId', id);
+                // Disparar evento personalizado para otras pestañas
+                window.dispatchEvent(new CustomEvent('projectChanged', { detail: id }));
+                loadDatasets(id); 
+              }}>
                 <SelectTrigger className="text-lg">
                   <SelectValue />
                 </SelectTrigger>

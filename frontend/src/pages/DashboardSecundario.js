@@ -9,7 +9,8 @@ import {
   Database,
   Calculator,
   BookOpen,
-  MessageCircle
+  MessageCircle,
+  Gamepad2
 } from 'lucide-react';
 import SidebarSecundario from '../components/SidebarSecundario';
 import Navbar from '../components/Navbar';
@@ -106,6 +107,13 @@ const DashboardSecundario = () => {
       color: 'from-pink-500 to-rose-600'
     },
     {
+      icon: Gamepad2,
+      title: 'Actividades Interactivas',
+      description: 'Ejercicios prácticos y simulaciones',
+      path: '/actividades-secundario',
+      color: 'from-orange-500 to-red-600'
+    },
+    {
       icon: MessageCircle,
       title: 'Profe Marce',
       description: 'Tu asistente de estadística con IA',
@@ -118,10 +126,10 @@ const DashboardSecundario = () => {
     <div className="flex min-h-screen bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50">
       <SidebarSecundario />
       
-      <div className="flex-1 ml-64">
+      <div className="flex-1 lg:ml-64 w-full">
         <Navbar projectName="Mi Progreso en Estadística" educationLevel="secundario" />
         
-        <div className="p-8">
+        <div className="p-4 sm:p-6 lg:p-8">
           {/* Welcome Section */}
           <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 rounded-3xl p-8 mb-8 text-white shadow-xl" data-testid="welcome-section">
             <div className="flex items-center justify-between">

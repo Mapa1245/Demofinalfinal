@@ -7,7 +7,7 @@ import remarkMath from 'remark-math';
 import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
-import { Download, FileText, Save, Loader } from 'lucide-react';
+import { Download, FileText, Save, Loader, Upload } from 'lucide-react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import SidebarPrimary from '../components/SidebarPrimary';
 import Navbar from '../components/Navbar';
@@ -66,9 +66,33 @@ const Descargar = () => {
   const [conclusions, setConclusions] = useState('');
   const [chartData, setChartData] = useState([]);
   const chartRef = useRef(null);
+  const conclusionsRef = useRef(null);
 
   useEffect(() => {
     loadProjects();
+    
+    // Escuchar cambios de proyecto
+    const handleStorageChange = (e) => {
+      if (e.key === 'currentProjectId' && e.newValue) {
+        setSelectedProject(e.newValue);
+        loadProjectData(e.newValue);
+      }
+    };
+    
+    const handleProjectChange = (e) => {
+      if (e.detail && e.detail !== selectedProject) {
+        setSelectedProject(e.detail);
+        loadProjectData(e.detail);
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('projectChanged', handleProjectChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('projectChanged', handleProjectChange);
+    };
   }, []);
 
   const loadProjects = async () => {
@@ -76,9 +100,16 @@ const Descargar = () => {
       const response = await axios.get(`${API}/projects`);
       const primaryProjects = response.data.filter(p => p.educationLevel === 'primario');
       setProjects(primaryProjects);
-      if (primaryProjects.length > 0) {
-        setSelectedProject(primaryProjects[0].id);
-        loadProjectData(primaryProjects[0].id);
+      
+      const currentProjectId = localStorage.getItem('currentProjectId');
+      if (currentProjectId && primaryProjects.find(p => p.id === currentProjectId)) {
+        setSelectedProject(currentProjectId);
+        loadProjectData(currentProjectId);
+      } else if (primaryProjects.length > 0) {
+        const firstProject = primaryProjects[0].id;
+        setSelectedProject(firstProject);
+        localStorage.setItem('currentProjectId', firstProject);
+        loadProjectData(firstProject);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -129,6 +160,8 @@ const Descargar = () => {
 
   const handleProjectChange = (projectId) => {
     setSelectedProject(projectId);
+    localStorage.setItem('currentProjectId', projectId);
+    window.dispatchEvent(new CustomEvent('projectChanged', { detail: projectId }));
     loadProjectData(projectId);
   };
 
@@ -288,20 +321,87 @@ const Descargar = () => {
         yPosition += 18;
 
         pdf.setTextColor(0, 0, 0);
-        pdf.setFontSize(10);
-        pdf.setFont('helvetica', 'normal');
 
-        const cleanReport = cleanTextForPDF(conclusions);
-        const reportLines = pdf.splitTextToSize(cleanReport, pageWidth - 40);
-        
-        reportLines.forEach(line => {
-          if (yPosition > pageHeight - 15) {
-            pdf.addPage();
-            yPosition = 20;
+        // Capturar conclusiones con LaTeX renderizado
+        if (conclusionsRef.current) {
+          try {
+            const conclusionsCanvas = await html2canvas(conclusionsRef.current, {
+              scale: 2,
+              backgroundColor: '#ffffff',
+              logging: false,
+              useCORS: true
+            });
+            
+            const conclusionsImgData = conclusionsCanvas.toDataURL('image/png');
+            const conclusionsImgWidth = pageWidth - 40;
+            const conclusionsImgHeight = (conclusionsCanvas.height * conclusionsImgWidth) / conclusionsCanvas.width;
+            
+            // Dividir en páginas si es necesario
+            let remainingHeight = conclusionsImgHeight;
+            let sourceY = 0;
+            
+            while (remainingHeight > 0) {
+              const availableHeight = pageHeight - yPosition - 15;
+              const heightToAdd = Math.min(remainingHeight, availableHeight);
+              
+              if (heightToAdd > 0) {
+                pdf.addImage(
+                  conclusionsImgData,
+                  'PNG',
+                  20,
+                  yPosition,
+                  conclusionsImgWidth,
+                  heightToAdd,
+                  undefined,
+                  'FAST',
+                  0,
+                  sourceY
+                );
+              }
+              
+              remainingHeight -= heightToAdd;
+              sourceY += heightToAdd;
+              
+              if (remainingHeight > 0) {
+                pdf.addPage();
+                yPosition = 20;
+              } else {
+                yPosition += heightToAdd + 10;
+              }
+            }
+          } catch (conclusionsError) {
+            console.error('Error capturando conclusiones:', conclusionsError);
+            // Fallback a texto plano
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'normal');
+            const cleanReport = cleanTextForPDF(conclusions);
+            const reportLines = pdf.splitTextToSize(cleanReport, pageWidth - 40);
+            
+            reportLines.forEach(line => {
+              if (yPosition > pageHeight - 15) {
+                pdf.addPage();
+                yPosition = 20;
+              }
+              pdf.text(line, 20, yPosition);
+              yPosition += 5;
+            });
           }
-          pdf.text(line, 20, yPosition);
-          yPosition += 5;
-        });
+        } else {
+          // Si no hay ref, usar texto plano
+          pdf.setFontSize(10);
+          pdf.setFont('helvetica', 'normal');
+          const cleanReport = cleanTextForPDF(conclusions);
+          const reportLines = pdf.splitTextToSize(cleanReport, pageWidth - 40);
+          
+          reportLines.forEach(line => {
+            if (yPosition > pageHeight - 15) {
+              pdf.addPage();
+              yPosition = 20;
+            }
+            pdf.text(line, 20, yPosition);
+            yPosition += 5;
+          });
+        }
       }
 
       // Footer
@@ -341,20 +441,88 @@ const Descargar = () => {
     toast.success('Proyecto exportado!');
   };
 
+  const importProject = async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      try {
+        const text = await file.text();
+        const importedData = JSON.parse(text);
+        
+        // Validar estructura
+        if (!importedData.project || !importedData.datasets) {
+          toast.error('Archivo inválido');
+          return;
+        }
+        
+        toast.info('Importando proyecto...');
+        
+        // Crear proyecto
+        const projectRes = await axios.post(`${API}/projects`, {
+          name: importedData.project.name + ' (Importado)',
+          description: importedData.project.description,
+          educationLevel: 'primario'
+        });
+        
+        const newProjectId = projectRes.data.id;
+        
+        // Importar datasets
+        for (const dataset of importedData.datasets) {
+          await axios.post(`${API}/datasets`, {
+            projectId: newProjectId,
+            name: dataset.name,
+            variables: dataset.variables
+          });
+        }
+        
+        // Importar estadísticas si existen
+        if (importedData.statistics && importedData.statistics.length > 0) {
+          for (const stat of importedData.statistics) {
+            await axios.post(`${API}/statistics`, {
+              projectId: newProjectId,
+              variableName: stat.variableName,
+              ...stat
+            });
+          }
+        }
+        
+        toast.success('¡Proyecto importado exitosamente!');
+        
+        // Recargar proyectos y seleccionar el nuevo
+        await loadProjects();
+        setSelectedProject(newProjectId);
+        localStorage.setItem('currentProjectId', newProjectId);
+        window.dispatchEvent(new CustomEvent('projectChanged', { detail: newProjectId }));
+        loadProjectData(newProjectId);
+        
+      } catch (error) {
+        console.error('Error:', error);
+        toast.error('Error al importar proyecto');
+      }
+    };
+    
+    input.click();
+  };
+
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-teal-50 via-blue-50 to-purple-50">
+    <div className="flex min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-amber-50">
       <SidebarPrimary />
       
-      <div className="flex-1 ml-64">
+      <div className="flex-1 lg:ml-64 w-full">
         <Navbar projectName="Descargar" educationLevel="primario" />
         
-        <div className="p-8">
-          <div className="bg-gradient-to-r from-teal-500 via-blue-500 to-purple-500 rounded-3xl p-8 mb-8 text-white shadow-2xl">
-            <h1 className="text-5xl font-heading font-black mb-2 flex items-center gap-3">
-              <Download className="w-12 h-12" />
+        <div className="p-4 sm:p-6 lg:p-8">
+          <div className="bg-gradient-to-r from-orange-300 via-amber-300 to-yellow-300 rounded-2xl sm:rounded-3xl p-6 sm:p-8 mb-6 sm:mb-8 text-white shadow-2xl">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-black mb-2 flex items-center gap-3">
+              <Download className="w-10 h-10 sm:w-12 sm:h-12" />
               Descargar
             </h1>
-            <p className="text-2xl font-accent">Guarda tus trabajos y compartilos</p>
+            <p className="text-lg sm:text-xl lg:text-2xl font-accent">Guarda tus trabajos y compartilos</p>
           </div>
 
           {/* Project Selector */}
@@ -403,7 +571,7 @@ const Descargar = () => {
                 <div className="text-5xl">🎯</div>
                 <h3 className="text-xl font-bold text-gray-800">Conclusiones de Profe Marce</h3>
               </div>
-              <div className="bg-purple-50 rounded-2xl p-4 max-h-64 overflow-y-auto prose prose-purple max-w-none">
+              <div ref={conclusionsRef} className="bg-purple-50 rounded-2xl p-4 max-h-64 overflow-y-auto prose prose-purple max-w-none">
                 <ReactMarkdown
                   remarkPlugins={[remarkMath, remarkGfm]}
                   rehypePlugins={[rehypeKatex]}
@@ -424,7 +592,7 @@ const Descargar = () => {
                 <div>
                   <h3 className="text-lg font-bold text-yellow-800">Queres agregar conclusiones al PDF?</h3>
                   <p className="text-yellow-700">
-                    Anda a <strong>"Conclusiones"</strong> en el menu y pedile a Profe Marce que analice tus datos.
+                    Anda a <strong>&quot;Conclusiones&quot;</strong> en el menu y pedile a Profe Marce que analice tus datos.
                   </p>
                 </div>
               </div>
@@ -432,7 +600,7 @@ const Descargar = () => {
           )}
 
           {/* Download Options */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-white rounded-3xl p-8 border-4 border-red-200 hover:border-red-400 transition-all hover:scale-105">
               <div className="text-7xl mb-4 text-center">📝</div>
               <h3 className="text-2xl font-bold text-gray-800 text-center mb-4">Descargar PDF</h3>
@@ -473,6 +641,20 @@ const Descargar = () => {
               >
                 <Save className="w-5 h-5 mr-2" />
                 Exportar Proyecto
+              </Button>
+            </div>
+
+            <div className="bg-white rounded-3xl p-8 border-4 border-blue-200 hover:border-blue-400 transition-all hover:scale-105">
+              <div className="text-7xl mb-4 text-center">📂</div>
+              <h3 className="text-2xl font-bold text-gray-800 text-center mb-4">Importar Proyecto</h3>
+              <p className="text-gray-600 text-center mb-6">Carga un proyecto guardado anteriormente</p>
+              <Button
+                onClick={importProject}
+                className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-full py-4 text-lg font-bold"
+                data-testid="import-project-btn"
+              >
+                <Upload className="w-5 h-5 mr-2" />
+                Importar Proyecto
               </Button>
             </div>
           </div>

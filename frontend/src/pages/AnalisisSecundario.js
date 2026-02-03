@@ -348,7 +348,7 @@ const AnalisisSecundario = () => {
     <div className="flex min-h-screen bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50">
       <SidebarSecundario />
       
-      <div className="flex-1 ml-64">
+      <div className="flex-1 lg:ml-64 w-full">
         <Navbar projectName={currentProject?.name || 'Análisis'} educationLevel="secundario" />
         
         <div className="p-6">
