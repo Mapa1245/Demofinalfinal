@@ -411,7 +411,7 @@ const CargaDatosSecundario = () => {
         source: 'frequency_table'
       };
 
-      await axios.post(`${API}/datasets`, dataset);
+      await localStorageService.createDataset(dataset);
       toast.success('¡Tabla de frecuencia guardada!');
       navigate('/graficos-secundario');
     } catch (error) {
@@ -442,7 +442,7 @@ const CargaDatosSecundario = () => {
 
     try {
       if (existingDataset) {
-        await axios.delete(`${API}/datasets/project/${currentProjectId}`);
+        await localStorageService.deleteDatasetsByProject(currentProjectId);
       }
 
       const dataset = {
@@ -456,7 +456,7 @@ const CargaDatosSecundario = () => {
         source: 'voice'
       };
 
-      await axios.post(`${API}/datasets`, dataset);
+      await localStorageService.createDataset(dataset);
       toast.success('¡Datos por voz guardados!');
       navigate('/graficos-secundario');
     } catch (error) {
