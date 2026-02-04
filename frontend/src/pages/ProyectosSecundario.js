@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { 
   PlusCircle, FolderOpen, Trash2, Edit, Play, Upload, 
   FileSpreadsheet, Trophy, Zap, TrendingUp, Download
@@ -28,9 +27,7 @@ import {
   DialogTrigger,
 } from '../components/ui/dialog';
 import { toast } from 'sonner';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+import localStorageService from '../services/localStorageService';
 
 const ProyectosSecundario = () => {
   const navigate = useNavigate();
@@ -46,7 +43,6 @@ const ProyectosSecundario = () => {
     description: ''
   });
 
-  // Proyectos de ejemplo predefinidos
   const exampleProjects = [
     {
       id: 'mundial_cualitativo',
@@ -89,9 +85,8 @@ const ProyectosSecundario = () => {
 
   const loadProjects = async () => {
     try {
-      const response = await axios.get(`${API}/projects`);
-      const secundarioProjects = response.data.filter(p => p.educationLevel === 'secundario');
-      setProjects(secundarioProjects);
+      const allProjects = await localStorageService.getProjects('secundario');
+      setProjects(allProjects);
     } catch (error) {
       console.error('Error cargando proyectos:', error);
       toast.error('Error al cargar proyectos');
@@ -107,7 +102,7 @@ const ProyectosSecundario = () => {
     }
 
     try {
-      const response = await axios.post(`${API}/projects`, {
+      const createdProject = await localStorageService.createProject({
         ...newProject,
         educationLevel: 'secundario'
       });
@@ -116,8 +111,7 @@ const ProyectosSecundario = () => {
       setShowCreateDialog(false);
       setNewProject({ name: '', analysisType: 'univariado', description: '' });
       
-      // Guardar el ID del proyecto y redirigir a carga de datos
-      localStorage.setItem('currentProjectId', response.data.id);
+      localStorage.setItem('currentProjectId', createdProject.id);
       navigate('/carga-datos-secundario');
     } catch (error) {
       console.error('Error creando proyecto:', error);
@@ -127,17 +121,14 @@ const ProyectosSecundario = () => {
 
   const loadExampleProject = async (example) => {
     try {
-      // Crear el proyecto
-      const projectResponse = await axios.post(`${API}/projects`, {
+      const newProject = await localStorageService.createProject({
         name: example.title,
         educationLevel: 'secundario',
         analysisType: example.type,
         description: example.description
       });
       
-      const projectId = projectResponse.data.id;
-
-      // Crear el dataset
+      const projectId = newProject.id;
       let datasetPayload;
       
       if (example.type === 'multivariado') {
@@ -151,16 +142,8 @@ const ProyectosSecundario = () => {
           projectId: projectId,
           rawData: rawData,
           variables: [
-            {
-              name: 'horas_estudio',
-              type: 'cuantitativa_continua',
-              values: example.data.horas_estudio
-            },
-            {
-              name: 'promedio',
-              type: 'cuantitativa_continua',
-              values: example.data.promedio
-            }
+            { name: 'horas_estudio', type: 'cuantitativa_continua', values: example.data.horas_estudio },
+            { name: 'promedio', type: 'cuantitativa_continua', values: example.data.promedio }
           ],
           source: 'example'
         };
@@ -168,16 +151,12 @@ const ProyectosSecundario = () => {
         datasetPayload = {
           projectId: projectId,
           rawData: example.data.map((val, idx) => ({ index: idx + 1, valor: val })),
-          variables: [{
-            name: 'valor',
-            type: example.variableType,
-            values: example.data
-          }],
+          variables: [{ name: 'valor', type: example.variableType, values: example.data }],
           source: 'example'
         };
       }
 
-      await axios.post(`${API}/datasets`, datasetPayload);
+      await localStorageService.createDataset(datasetPayload);
       
       toast.success(`Proyecto "${example.title}" cargado exitosamente`);
       loadProjects();
@@ -191,7 +170,7 @@ const ProyectosSecundario = () => {
     if (!window.confirm(`¿Estás seguro de eliminar "${projectName}"?`)) return;
 
     try {
-      await axios.delete(`${API}/projects/${projectId}`);
+      await localStorageService.deleteProject(projectId);
       toast.success('Proyecto eliminado');
       loadProjects();
     } catch (error) {
@@ -209,7 +188,7 @@ const ProyectosSecundario = () => {
     if (!editingProject) return;
 
     try {
-      await axios.put(`${API}/projects/${editingProject.id}`, {
+      await localStorageService.updateProject(editingProject.id, {
         name: editingProject.name,
         description: editingProject.description,
         analysisType: editingProject.analysisType
@@ -238,20 +217,18 @@ const ProyectosSecundario = () => {
       const text = await file.text();
       const projectData = JSON.parse(text);
       
-      // Crear el proyecto importado
-      const response = await axios.post(`${API}/projects`, {
+      const newProject = await localStorageService.createProject({
         name: projectData.name || 'Proyecto Importado',
         educationLevel: 'secundario',
         analysisType: projectData.analysisType || 'univariado',
         description: projectData.description || 'Proyecto importado desde archivo'
       });
 
-      // Si tiene datos, crearlos también
       if (projectData.datasets && projectData.datasets.length > 0) {
         for (const dataset of projectData.datasets) {
-          await axios.post(`${API}/datasets`, {
+          await localStorageService.createDataset({
             ...dataset,
-            projectId: response.data.id
+            projectId: newProject.id
           });
         }
       }
@@ -263,7 +240,6 @@ const ProyectosSecundario = () => {
       toast.error('Error al importar proyecto. Verificá el formato del archivo.');
     }
     
-    // Limpiar el input
     event.target.value = '';
   };
 
@@ -275,71 +251,38 @@ const ProyectosSecundario = () => {
         <Navbar projectName="Mis Proyectos" educationLevel="secundario" />
         
         <div className="p-8">
-          {/* Header */}
           <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 rounded-3xl p-8 mb-8 text-white shadow-xl">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-4xl font-heading font-bold mb-2">
-                  📁 Mis Proyectos
-                </h1>
-                <p className="text-purple-100 text-lg">
-                  Creá, editá y gestioná tus proyectos de análisis estadístico
-                </p>
+                <h1 className="text-4xl font-heading font-bold mb-2">📁 Mis Proyectos</h1>
+                <p className="text-purple-100 text-lg">Creá, editá y gestioná tus proyectos de análisis estadístico</p>
               </div>
               <div className="flex gap-3">
-                {/* Importar Proyecto */}
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileUpload}
-                  accept=".json"
-                  className="hidden"
-                />
-                <Button
-                  onClick={() => fileInputRef.current?.click()}
-                  variant="outline"
-                  className="bg-white/10 border-white/30 text-white hover:bg-white/20"
-                  data-testid="import-project-button"
-                >
-                  <Upload className="w-5 h-5 mr-2" />
-                  Importar Proyecto
+                <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".json" className="hidden" />
+                <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="bg-white/10 border-white/30 text-white hover:bg-white/20" data-testid="import-project-button">
+                  <Upload className="w-5 h-5 mr-2" />Importar Proyecto
                 </Button>
                 
-                {/* Crear Proyecto */}
                 <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                   <DialogTrigger asChild>
                     <Button className="bg-white text-purple-600 hover:bg-purple-50" data-testid="create-project-button">
-                      <PlusCircle className="w-5 h-5 mr-2" />
-                      Nuevo Proyecto
+                      <PlusCircle className="w-5 h-5 mr-2" />Nuevo Proyecto
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[500px]">
                     <DialogHeader>
                       <DialogTitle className="text-2xl">Crear Nuevo Proyecto</DialogTitle>
-                      <DialogDescription>
-                        Completá la información para crear tu proyecto de análisis
-                      </DialogDescription>
+                      <DialogDescription>Completá la información para crear tu proyecto de análisis</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                       <div className="grid gap-2">
                         <Label htmlFor="name">Nombre del Proyecto</Label>
-                        <Input
-                          id="name"
-                          data-testid="project-name-input"
-                          placeholder="Ej: Encuesta de Opiniones"
-                          value={newProject.name}
-                          onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
-                        />
+                        <Input id="name" data-testid="project-name-input" placeholder="Ej: Encuesta de Opiniones" value={newProject.name} onChange={(e) => setNewProject({ ...newProject, name: e.target.value })} />
                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="analysisType">¿El análisis será de una variable o multivariable?</Label>
-                        <Select
-                          value={newProject.analysisType}
-                          onValueChange={(value) => setNewProject({ ...newProject, analysisType: value })}
-                        >
-                          <SelectTrigger data-testid="analysis-type-select">
-                            <SelectValue />
-                          </SelectTrigger>
+                        <Select value={newProject.analysisType} onValueChange={(value) => setNewProject({ ...newProject, analysisType: value })}>
+                          <SelectTrigger data-testid="analysis-type-select"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="univariado">Univariado (una variable)</SelectItem>
                             <SelectItem value="multivariado">Multivariado (varias variables)</SelectItem>
@@ -348,21 +291,12 @@ const ProyectosSecundario = () => {
                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="description">Descripción (opcional)</Label>
-                        <Textarea
-                          id="description"
-                          placeholder="Describe brevemente tu proyecto y qué querés analizar"
-                          value={newProject.description}
-                          onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
-                        />
+                        <Textarea id="description" placeholder="Describe brevemente tu proyecto" value={newProject.description} onChange={(e) => setNewProject({ ...newProject, description: e.target.value })} />
                       </div>
                     </div>
                     <DialogFooter>
-                      <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-                        Cancelar
-                      </Button>
-                      <Button onClick={createProject} className="bg-purple-600 hover:bg-purple-700" data-testid="confirm-create-project">
-                        Crear y Cargar Datos
-                      </Button>
+                      <Button variant="outline" onClick={() => setShowCreateDialog(false)}>Cancelar</Button>
+                      <Button onClick={createProject} className="bg-purple-600 hover:bg-purple-700" data-testid="confirm-create-project">Crear y Cargar Datos</Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
@@ -370,23 +304,15 @@ const ProyectosSecundario = () => {
             </div>
           </div>
 
-          {/* Proyectos de Ejemplo */}
           <div className="mb-8">
             <h2 className="text-2xl font-heading font-bold text-purple-900 mb-4 flex items-center gap-2">
-              <Zap className="w-6 h-6 text-yellow-500" />
-              Proyectos de Ejemplo
+              <Zap className="w-6 h-6 text-yellow-500" />Proyectos de Ejemplo
             </h2>
-            <p className="text-gray-600 mb-6">
-              Cargá estos proyectos para practicar análisis estadístico con datos reales
-            </p>
+            <p className="text-gray-600 mb-6">Cargá estos proyectos para practicar análisis estadístico con datos reales</p>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {exampleProjects.map((example) => (
-                <div
-                  key={example.id}
-                  className="bg-white rounded-2xl p-6 border-2 border-purple-100 hover:border-purple-300 transition-all hover:shadow-lg"
-                  data-testid={`example-project-${example.id}`}
-                >
+                <div key={example.id} className="bg-white rounded-2xl p-6 border-2 border-purple-100 hover:border-purple-300 transition-all hover:shadow-lg" data-testid={`example-project-${example.id}`}>
                   <div className="flex items-start justify-between mb-4">
                     <div className="text-5xl">{example.icon}</div>
                     <span className={`px-3 py-1 rounded-full text-xs font-bold text-white bg-gradient-to-r ${example.color}`}>
@@ -395,97 +321,55 @@ const ProyectosSecundario = () => {
                   </div>
                   <h3 className="text-xl font-bold text-purple-900 mb-2">{example.title}</h3>
                   <p className="text-sm text-gray-600 mb-4">{example.description}</p>
-                  <Button
-                    onClick={() => loadExampleProject(example)}
-                    className={`w-full bg-gradient-to-r ${example.color} text-white`}
-                    data-testid={`load-example-${example.id}`}
-                  >
-                    <Play className="w-4 h-4 mr-2" />
-                    Cargar Proyecto
+                  <Button onClick={() => loadExampleProject(example)} className={`w-full bg-gradient-to-r ${example.color} text-white`} data-testid={`load-example-${example.id}`}>
+                    <Play className="w-4 h-4 mr-2" />Cargar Proyecto
                   </Button>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Mis Proyectos */}
           <div>
             <h2 className="text-2xl font-heading font-bold text-purple-900 mb-4 flex items-center gap-2">
-              <FolderOpen className="w-6 h-6 text-purple-600" />
-              Mis Proyectos
+              <FolderOpen className="w-6 h-6 text-purple-600" />Mis Proyectos
             </h2>
             
             {loading ? (
-              <div className="text-center py-12 text-gray-500">
-                Cargando proyectos...
-              </div>
+              <div className="text-center py-12 text-gray-500">Cargando proyectos...</div>
             ) : projects.length === 0 ? (
               <div className="bg-white rounded-3xl p-12 text-center border-2 border-purple-100" data-testid="no-projects-message">
                 <FolderOpen className="w-20 h-20 text-purple-300 mx-auto mb-4" />
-                <h3 className="text-2xl font-heading font-bold text-purple-900 mb-3">
-                  No tenés proyectos aún
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  Creá tu primer proyecto o cargá uno de los ejemplos de arriba
-                </p>
+                <h3 className="text-2xl font-heading font-bold text-purple-900 mb-3">No tenés proyectos aún</h3>
+                <p className="text-gray-600 mb-6">Creá tu primer proyecto o cargá uno de los ejemplos de arriba</p>
                 <Button onClick={() => setShowCreateDialog(true)} className="bg-purple-600 hover:bg-purple-700">
-                  <PlusCircle className="w-5 h-5 mr-2" />
-                  Crear Primer Proyecto
+                  <PlusCircle className="w-5 h-5 mr-2" />Crear Primer Proyecto
                 </Button>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {projects.map((project) => (
-                  <div
-                    key={project.id}
-                    data-testid={`project-card-${project.id}`}
-                    className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border-2 border-purple-100 hover:border-purple-300 group"
-                  >
+                  <div key={project.id} data-testid={`project-card-${project.id}`} className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border-2 border-purple-100 hover:border-purple-300 group">
                     <div className="flex items-start justify-between mb-4">
                       <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center">
                         <FolderOpen className="w-6 h-6 text-purple-600" />
                       </div>
                       <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => editProject(project)}
-                          className="w-8 h-8 rounded-lg bg-purple-50 hover:bg-purple-100 flex items-center justify-center"
-                          data-testid={`edit-project-${project.id}`}
-                        >
+                        <button onClick={() => editProject(project)} className="w-8 h-8 rounded-lg bg-purple-50 hover:bg-purple-100 flex items-center justify-center" data-testid={`edit-project-${project.id}`}>
                           <Edit className="w-4 h-4 text-purple-600" />
                         </button>
-                        <button
-                          onClick={() => deleteProject(project.id, project.name)}
-                          className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center"
-                          data-testid={`delete-project-${project.id}`}
-                        >
+                        <button onClick={() => deleteProject(project.id, project.name)} className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center" data-testid={`delete-project-${project.id}`}>
                           <Trash2 className="w-4 h-4 text-red-600" />
                         </button>
                       </div>
                     </div>
-
-                    <h3 className="font-heading font-bold text-purple-900 text-xl mb-2">
-                      {project.name}
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                      {project.description || 'Sin descripción'}
-                    </p>
-
+                    <h3 className="font-heading font-bold text-purple-900 text-xl mb-2">{project.name}</h3>
+                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">{project.description || 'Sin descripción'}</p>
                     <div className="flex items-center justify-between mb-4">
-                      <span className="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-bold">
-                        {project.analysisType}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {new Date(project.createdAt).toLocaleDateString('es-AR')}
-                      </span>
+                      <span className="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-bold">{project.analysisType}</span>
+                      <span className="text-xs text-gray-500">{new Date(project.createdAt).toLocaleDateString('es-AR')}</span>
                     </div>
-
-                    <Button
-                      onClick={() => continueProject(project.id)}
-                      className="w-full bg-purple-600 hover:bg-purple-700"
-                      data-testid={`continue-project-${project.id}`}
-                    >
-                      <Play className="w-4 h-4 mr-2" />
-                      Continuar
+                    <Button onClick={() => continueProject(project.id)} className="w-full bg-purple-600 hover:bg-purple-700" data-testid={`continue-project-${project.id}`}>
+                      <Play className="w-4 h-4 mr-2" />Continuar
                     </Button>
                   </div>
                 ))}
@@ -493,34 +377,22 @@ const ProyectosSecundario = () => {
             )}
           </div>
 
-          {/* Edit Dialog */}
           <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle className="text-2xl">Editar Proyecto</DialogTitle>
-                <DialogDescription>
-                  Modificá la información de tu proyecto
-                </DialogDescription>
+                <DialogDescription>Modificá la información de tu proyecto</DialogDescription>
               </DialogHeader>
               {editingProject && (
                 <div className="grid gap-4 py-4">
                   <div className="grid gap-2">
                     <Label htmlFor="edit-name">Nombre del Proyecto</Label>
-                    <Input
-                      id="edit-name"
-                      value={editingProject.name}
-                      onChange={(e) => setEditingProject({ ...editingProject, name: e.target.value })}
-                    />
+                    <Input id="edit-name" value={editingProject.name} onChange={(e) => setEditingProject({ ...editingProject, name: e.target.value })} />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="edit-analysis">Tipo de Análisis</Label>
-                    <Select
-                      value={editingProject.analysisType}
-                      onValueChange={(value) => setEditingProject({ ...editingProject, analysisType: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
+                    <Select value={editingProject.analysisType} onValueChange={(value) => setEditingProject({ ...editingProject, analysisType: value })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="univariado">Univariado</SelectItem>
                         <SelectItem value="multivariado">Multivariado</SelectItem>
@@ -529,21 +401,13 @@ const ProyectosSecundario = () => {
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="edit-description">Descripción</Label>
-                    <Textarea
-                      id="edit-description"
-                      value={editingProject.description || ''}
-                      onChange={(e) => setEditingProject({ ...editingProject, description: e.target.value })}
-                    />
+                    <Textarea id="edit-description" value={editingProject.description || ''} onChange={(e) => setEditingProject({ ...editingProject, description: e.target.value })} />
                   </div>
                 </div>
               )}
               <DialogFooter>
-                <Button variant="outline" onClick={() => setShowEditDialog(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={saveEditedProject} className="bg-purple-600 hover:bg-purple-700">
-                  Guardar Cambios
-                </Button>
+                <Button variant="outline" onClick={() => setShowEditDialog(false)}>Cancelar</Button>
+                <Button onClick={saveEditedProject} className="bg-purple-600 hover:bg-purple-700">Guardar Cambios</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
