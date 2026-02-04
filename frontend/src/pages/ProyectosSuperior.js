@@ -113,8 +113,7 @@ const ProyectosSuperior = () => {
 
   const loadProjects = async () => {
     try {
-      const response = await axios.get(`${API}/projects`);
-      const superiorProjects = response.data.filter(p => p.educationLevel === 'superior');
+      const superiorProjects = await localStorageService.getProjects('superior');
       setProjects(superiorProjects);
     } catch (error) {
       console.error('Error cargando proyectos:', error);
@@ -131,7 +130,7 @@ const ProyectosSuperior = () => {
     }
 
     try {
-      const response = await axios.post(`${API}/projects`, {
+      const createdProject = await localStorageService.createProject({
         ...newProject,
         educationLevel: 'superior'
       });
@@ -140,7 +139,7 @@ const ProyectosSuperior = () => {
       setShowCreateDialog(false);
       setNewProject({ name: '', analysisType: 'univariado', description: '' });
       
-      localStorage.setItem('currentProjectId', response.data.id);
+      localStorage.setItem('currentProjectId', createdProject.id);
       navigate('/carga-datos-superior');
     } catch (error) {
       console.error('Error creando proyecto:', error);
@@ -150,14 +149,14 @@ const ProyectosSuperior = () => {
 
   const loadExampleProject = async (example) => {
     try {
-      const projectResponse = await axios.post(`${API}/projects`, {
+      const newProject = await localStorageService.createProject({
         name: example.title,
         educationLevel: 'superior',
         analysisType: example.type,
         description: example.description
       });
       
-      const projectId = projectResponse.data.id;
+      const projectId = newProject.id;
 
       // Crear variables a partir de los datos del ejemplo
       const variableNames = Object.keys(example.data);
