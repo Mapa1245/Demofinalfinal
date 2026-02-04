@@ -74,8 +74,7 @@ const GraficosSuperior = () => {
 
   const loadProjects = async () => {
     try {
-      const response = await axios.get(`${API}/projects`);
-      const superiorProjects = response.data.filter(p => p.educationLevel === 'superior');
+      const superiorProjects = await localStorageService.getProjects('superior');
       setProjects(superiorProjects);
     } catch (error) {
       console.error('Error:', error);
@@ -84,8 +83,8 @@ const GraficosSuperior = () => {
 
   const loadProjectDetails = async (projectId) => {
     try {
-      const response = await axios.get(`${API}/projects/${projectId}`);
-      setCurrentProject(response.data);
+      const project = await localStorageService.getProjectById(projectId);
+      setCurrentProject(project);
     } catch (error) {
       console.error('Error:', error);
     }
@@ -93,11 +92,11 @@ const GraficosSuperior = () => {
 
   const loadDatasets = async (projectId) => {
     try {
-      const response = await axios.get(`${API}/datasets/${projectId}`);
-      setDatasets(response.data);
+      const projectDatasets = await localStorageService.getDatasets(projectId);
+      setDatasets(projectDatasets);
       
-      if (response.data.length > 0) {
-        const dataset = response.data[0];
+      if (projectDatasets.length > 0) {
+        const dataset = projectDatasets[0];
         setVariables(dataset.variables || []);
         
         if (dataset.variables && dataset.variables.length > 0) {
