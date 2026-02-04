@@ -184,7 +184,7 @@ const ProyectosSuperior = () => {
         source: 'example'
       };
 
-      await axios.post(`${API}/datasets`, datasetPayload);
+      await localStorageService.createDataset(datasetPayload);
       
       toast.success(`Proyecto "${example.title}" cargado exitosamente`);
       loadProjects();
@@ -198,7 +198,7 @@ const ProyectosSuperior = () => {
     if (!window.confirm(`¿Estás seguro de eliminar "${projectName}"?`)) return;
 
     try {
-      await axios.delete(`${API}/projects/${projectId}`);
+      await localStorageService.deleteProject(projectId);
       toast.success('Proyecto eliminado');
       loadProjects();
     } catch (error) {
@@ -216,7 +216,7 @@ const ProyectosSuperior = () => {
     if (!editingProject) return;
 
     try {
-      await axios.put(`${API}/projects/${editingProject.id}`, {
+      await localStorageService.updateProject(editingProject.id, {
         name: editingProject.name,
         description: editingProject.description,
         analysisType: editingProject.analysisType
@@ -245,7 +245,7 @@ const ProyectosSuperior = () => {
       const text = await file.text();
       const projectData = JSON.parse(text);
       
-      const response = await axios.post(`${API}/projects`, {
+      const newProject = await localStorageService.createProject({
         name: projectData.name || 'Proyecto Importado',
         educationLevel: 'superior',
         analysisType: projectData.analysisType || 'univariado',
@@ -254,9 +254,9 @@ const ProyectosSuperior = () => {
 
       if (projectData.datasets && projectData.datasets.length > 0) {
         for (const dataset of projectData.datasets) {
-          await axios.post(`${API}/datasets`, {
+          await localStorageService.createDataset({
             ...dataset,
-            projectId: response.data.id
+            projectId: newProject.id
           });
         }
       }
