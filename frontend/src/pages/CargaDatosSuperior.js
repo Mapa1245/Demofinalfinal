@@ -85,9 +85,9 @@ const CargaDatosSuperior = () => {
 
   const loadProjectDetails = async (projectId) => {
     try {
-      const response = await axios.get(`${API}/projects/${projectId}`);
-      setCurrentProject(response.data);
-      setAnalysisType(response.data.analysisType || 'multivariado');
+      const project = await localStorageService.getProjectById(projectId);
+      setCurrentProject(project);
+      setAnalysisType(project.analysisType || 'multivariado');
     } catch (error) {
       console.error('Error cargando proyecto:', error);
     }
@@ -95,9 +95,9 @@ const CargaDatosSuperior = () => {
 
   const loadExistingData = async (projectId) => {
     try {
-      const response = await axios.get(`${API}/datasets/${projectId}`);
-      if (response.data.length > 0) {
-        const dataset = response.data[0];
+      const datasets = await localStorageService.getDatasets(projectId);
+      if (datasets.length > 0) {
+        const dataset = datasets[0];
         setExistingDataset(dataset);
         
         if (dataset.variables && dataset.variables.length > 0) {
