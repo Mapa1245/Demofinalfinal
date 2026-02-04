@@ -138,7 +138,7 @@ const Descargar = () => {
       }
 
       if (datasets.length > 0 && datasets[0].variables) {
-        const variable = datasetsRes.data[0].variables[0];
+        const variable = datasets[0].variables[0];
         if (variable && variable.values) {
           const valueCounts = {};
           variable.values.forEach(val => {
