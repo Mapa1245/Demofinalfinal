@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
 import { Calculator, TrendingUp, BarChart3, Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import SidebarSecundario from '../components/SidebarSecundario';
 import Navbar from '../components/Navbar';
@@ -13,9 +12,7 @@ import {
   SelectValue,
 } from '../components/ui/select';
 import { toast } from 'sonner';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+import localStorageService from '../services/localStorageService';
 
 const AnalisisSecundario = () => {
   const [projects, setProjects] = useState([]);
