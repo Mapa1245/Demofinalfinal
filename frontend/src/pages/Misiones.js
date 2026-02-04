@@ -43,29 +43,48 @@ const Misiones = () => {
         const text = await file.text();
         const importedData = JSON.parse(text);
         
-        // Validar estructura
-        if (!importedData.project || !importedData.datasets) {
-          toast.error('Archivo inválido');
+        // Validar estructura - aceptar múltiples formatos
+        const hasProject = importedData.project || importedData.name;
+        const hasDatasets = importedData.datasets || importedData.variables;
+        
+        if (!hasProject && !hasDatasets) {
+          toast.error('Archivo inválido - debe contener proyecto y datos');
           return;
         }
         
         toast.info('Importando misión...');
         
-        // Crear proyecto localmente
+        // Obtener nombre del proyecto (mantener el original)
+        const projectName = importedData.project?.name || importedData.name || 'Misión Importada';
+        
+        // Crear proyecto localmente (mantener nombre original sin " (Importado)")
         const newProject = await localStorageService.createProject({
-          name: importedData.project.name + ' (Importado)',
-          description: importedData.project.description,
-          educationLevel: 'primario'
+          name: projectName,
+          description: importedData.project?.description || importedData.description || '',
+          educationLevel: 'primario',
+          analysisType: importedData.project?.analysisType || importedData.analysisType || 'univariado'
         });
         
         const newProjectId = newProject.id;
         
         // Importar datasets
-        for (const dataset of importedData.datasets) {
+        if (importedData.datasets && importedData.datasets.length > 0) {
+          for (const dataset of importedData.datasets) {
+            await localStorageService.createDataset({
+              projectId: newProjectId,
+              name: dataset.name,
+              rawData: dataset.rawData || [],
+              variables: dataset.variables || [],
+              source: 'imported'
+            });
+          }
+        } else if (importedData.variables) {
+          // Formato simplificado
           await localStorageService.createDataset({
             projectId: newProjectId,
-            name: dataset.name,
-            variables: dataset.variables
+            name: 'datos',
+            variables: importedData.variables,
+            source: 'imported'
           });
         }
         
@@ -81,7 +100,7 @@ const Misiones = () => {
         
       } catch (error) {
         console.error('Error:', error);
-        toast.error('Error al importar misión');
+        toast.error('Error al importar misión - verificá el formato del archivo');
       }
     };
     
