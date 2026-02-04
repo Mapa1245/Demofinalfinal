@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { Upload, Mic, Table2, Save, Plus, X, Edit } from 'lucide-react';
 import SidebarPrimary from '../components/SidebarPrimary';
 import Navbar from '../components/Navbar';
@@ -10,9 +9,7 @@ import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { toast } from 'sonner';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+import localStorageService from '../services/localStorageService';
 
 const CargaDatosPrimaria = () => {
   const navigate = useNavigate();
@@ -66,9 +63,9 @@ const CargaDatosPrimaria = () => {
 
   const loadExistingData = async (projectId) => {
     try {
-      const response = await axios.get(`${API}/datasets/${projectId}`);
-      if (response.data.length > 0) {
-        const dataset = response.data[0];
+      const datasets = await localStorageService.getDatasets(projectId);
+      if (datasets.length > 0) {
+        const dataset = datasets[0];
         setExistingDataset(dataset);
         
         // Pre-fill data for editing
@@ -133,7 +130,7 @@ const CargaDatosPrimaria = () => {
     try {
       // Delete existing datasets if editing
       if (existingDataset) {
-        await axios.delete(`${API}/datasets/project/${currentProjectId}`);
+        await localStorageService.deleteDatasetsByProject(currentProjectId);
       }
 
       const dataset = {
@@ -147,7 +144,7 @@ const CargaDatosPrimaria = () => {
         source: 'manual'
       };
 
-      await axios.post(`${API}/datasets`, dataset);
+      await localStorageService.createDataset(dataset);
       toast.success('¡Datos guardados! 🎉');
       navigate('/graficos-primaria');
     } catch (error) {
@@ -167,7 +164,7 @@ const CargaDatosPrimaria = () => {
     try {
       // Delete existing datasets if editing
       if (existingDataset) {
-        await axios.delete(`${API}/datasets/project/${currentProjectId}`);
+        await localStorageService.deleteDatasetsByProject(currentProjectId);
       }
 
       const values = [];
@@ -189,7 +186,7 @@ const CargaDatosPrimaria = () => {
         source: 'frequency_table'
       };
 
-      await axios.post(`${API}/datasets`, dataset);
+      await localStorageService.createDataset(dataset);
       toast.success('¡Datos guardados! 🎉');
       navigate('/graficos-primaria');
     } catch (error) {
@@ -474,7 +471,7 @@ const CargaDatosPrimaria = () => {
 
                           try {
                             if (existingDataset) {
-                              await axios.delete(`${API}/datasets/project/${currentProjectId}`);
+                              await localStorageService.deleteDatasetsByProject(currentProjectId);
                             }
 
                             const dataset = {
@@ -488,7 +485,7 @@ const CargaDatosPrimaria = () => {
                               source: 'voice'
                             };
 
-                            await axios.post(`${API}/datasets`, dataset);
+                            await localStorageService.createDataset(dataset);
                             toast.success('¡Datos guardados! 🎉');
                             navigate('/graficos-primaria');
                           } catch (error) {
