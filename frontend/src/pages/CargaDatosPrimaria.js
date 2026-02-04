@@ -20,44 +20,16 @@ const CargaDatosPrimaria = () => {
   const [frequencyData, setFrequencyData] = useState([{ value: '', frequency: '' }]);
   const [variableName, setVariableName] = useState('');
   const [existingDataset, setExistingDataset] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [voiceTranscript, setVoiceTranscript] = useState('');
   const [recognition, setRecognition] = useState(null);
 
   useEffect(() => {
     loadProjects();
+    initSpeechRecognition();
   }, []);
 
-  const loadProjects = async () => {
-    try {
-      const primaryProjects = await localStorageService.getProjects('primario');
-      setProjects(primaryProjects);
-      
-      const projectId = localStorage.getItem('currentProjectId');
-      // Verificar que el proyecto seleccionado sea del nivel correcto
-      if (projectId && primaryProjects.find(p => p.id === projectId)) {
-        setCurrentProjectId(projectId);
-        loadExistingData(projectId);
-      } else if (primaryProjects.length > 0) {
-        // Seleccionar el primer proyecto de primaria
-        const firstProject = primaryProjects[0].id;
-        setCurrentProjectId(firstProject);
-        localStorage.setItem('currentProjectId', firstProject);
-        loadExistingData(firstProject);
-      } else {
-        toast.error('No hay ninguna misión seleccionada');
-        navigate('/misiones');
-      }
-    } catch (error) {
-      console.error('Error cargando proyectos:', error);
-    }
-    } else {
-      toast.error('No hay ninguna misión seleccionada');
-      navigate('/misiones');
-    }
-
-    // Initialize speech recognition
+  const initSpeechRecognition = () => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const recognitionInstance = new SpeechRecognition();
@@ -83,7 +55,41 @@ const CargaDatosPrimaria = () => {
 
       setRecognition(recognitionInstance);
     }
-  }, [navigate]);
+  };
+
+  const loadProjects = async () => {
+    try {
+      const primaryProjects = await localStorageService.getProjects('primario');
+      setProjects(primaryProjects);
+      
+      const projectId = localStorage.getItem('currentProjectId');
+      if (projectId && primaryProjects.find(p => p.id === projectId)) {
+        setCurrentProjectId(projectId);
+        loadExistingData(projectId);
+      } else if (primaryProjects.length > 0) {
+        const firstProject = primaryProjects[0].id;
+        setCurrentProjectId(firstProject);
+        localStorage.setItem('currentProjectId', firstProject);
+        loadExistingData(firstProject);
+      } else {
+        toast.error('No hay ninguna misión. Creá una primero.');
+        navigate('/misiones');
+      }
+    } catch (error) {
+      console.error('Error cargando proyectos:', error);
+    }
+  };
+
+  const handleProjectChange = (projectId) => {
+    setCurrentProjectId(projectId);
+    localStorage.setItem('currentProjectId', projectId);
+    setManualData('');
+    setFrequencyData([{ value: '', frequency: '' }]);
+    setVariableName('');
+    setExistingDataset(null);
+    setVoiceTranscript('');
+    loadExistingData(projectId);
+  };
 
   const loadExistingData = async (projectId) => {
     try {
@@ -92,13 +98,11 @@ const CargaDatosPrimaria = () => {
         const dataset = datasets[0];
         setExistingDataset(dataset);
         
-        // Pre-fill data for editing
         if (dataset.variables && dataset.variables.length > 0) {
           const variable = dataset.variables[0];
           setVariableName(variable.name);
           
           if (dataset.source === 'frequency_table') {
-            // Reconstruct frequency table
             const valueCounts = {};
             variable.values.forEach(val => {
               valueCounts[val] = (valueCounts[val] || 0) + 1;
@@ -109,7 +113,6 @@ const CargaDatosPrimaria = () => {
             }));
             setFrequencyData(freqArray);
           } else {
-            // Join values for manual input
             setManualData(variable.values.join(' '));
           }
         }
@@ -136,15 +139,16 @@ const CargaDatosPrimaria = () => {
   };
 
   const saveManualData = async () => {
+    if (!currentProjectId) {
+      toast.error('Seleccioná una misión primero');
+      return;
+    }
     if (!manualData.trim()) {
       toast.error('¡Ingresá algunos datos!');
       return;
     }
 
-    const values = manualData
-      .trim()
-      .split(/[\s,]+/)
-      .filter(v => v.trim() !== '');
+    const values = manualData.trim().split(/[\s,]+/).filter(v => v.trim() !== '');
 
     if (values.length === 0) {
       toast.error('¡Ingresá al menos un dato!');
@@ -152,7 +156,6 @@ const CargaDatosPrimaria = () => {
     }
 
     try {
-      // Delete existing datasets if editing
       if (existingDataset) {
         await localStorageService.deleteDatasetsByProject(currentProjectId);
       }
@@ -178,6 +181,10 @@ const CargaDatosPrimaria = () => {
   };
 
   const saveFrequencyTable = async () => {
+    if (!currentProjectId) {
+      toast.error('Seleccioná una misión primero');
+      return;
+    }
     const validData = frequencyData.filter(row => row.value && row.frequency);
     
     if (validData.length === 0) {
@@ -186,7 +193,6 @@ const CargaDatosPrimaria = () => {
     }
 
     try {
-      // Delete existing datasets if editing
       if (existingDataset) {
         await localStorageService.deleteDatasetsByProject(currentProjectId);
       }
@@ -219,6 +225,48 @@ const CargaDatosPrimaria = () => {
     }
   };
 
+  const saveVoiceData = async () => {
+    if (!currentProjectId) {
+      toast.error('Seleccioná una misión primero');
+      return;
+    }
+    if (!voiceTranscript.trim()) {
+      toast.error('¡Decí algunos datos primero!');
+      return;
+    }
+
+    const values = voiceTranscript.trim().split(/[\s,]+/).filter(v => v.trim() !== '');
+
+    if (values.length === 0) {
+      toast.error('¡No escuché ningún dato!');
+      return;
+    }
+
+    try {
+      if (existingDataset) {
+        await localStorageService.deleteDatasetsByProject(currentProjectId);
+      }
+
+      const dataset = {
+        projectId: currentProjectId,
+        rawData: values.map((val, idx) => ({ index: idx + 1, valor: val })),
+        variables: [{
+          name: variableName || 'valor',
+          type: 'cualitativa_nominal',
+          values: values
+        }],
+        source: 'voice'
+      };
+
+      await localStorageService.createDataset(dataset);
+      toast.success('¡Datos guardados! 🎉');
+      navigate('/graficos-primaria');
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Error al guardar datos');
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50">
       <SidebarPrimary />
@@ -234,6 +282,21 @@ const CargaDatosPrimaria = () => {
             <p className="text-2xl font-accent">
               {existingDataset ? 'Modificá la información si te equivocaste' : 'Elegí cómo querés ingresar la información'}
             </p>
+          </div>
+
+          {/* Selector de Proyecto */}
+          <div className="bg-white rounded-3xl p-6 mb-6 border-4 border-blue-200">
+            <Label className="text-xl font-bold text-blue-700 mb-3 block">📁 Elegí tu Misión:</Label>
+            <Select value={currentProjectId} onValueChange={handleProjectChange}>
+              <SelectTrigger className="text-lg h-14">
+                <SelectValue placeholder="Seleccionar misión" />
+              </SelectTrigger>
+              <SelectContent>
+                {projects.map(p => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {existingDataset && (
@@ -317,7 +380,6 @@ const CargaDatosPrimaria = () => {
                   />
                 </div>
 
-                {/* Table Header */}
                 <div className="mb-4">
                   <div className="grid grid-cols-12 gap-3 mb-2">
                     <div className="col-span-6 font-bold text-lg text-center bg-purple-100 p-3 rounded-lg border-2 border-purple-300">
@@ -330,7 +392,6 @@ const CargaDatosPrimaria = () => {
                   </div>
                 </div>
 
-                {/* Table Rows */}
                 <div className="space-y-3 mb-6 max-h-96 overflow-y-auto">
                   {frequencyData.map((row, idx) => (
                     <div key={idx} className="grid grid-cols-12 gap-3 items-center">
@@ -436,7 +497,6 @@ const CargaDatosPrimaria = () => {
                       </p>
                     </div>
 
-                    {/* Voice Transcript Display */}
                     <div className="bg-gray-50 rounded-2xl p-6 border-2 border-gray-200 mb-6">
                       <Label className="text-lg mb-2 block text-left">Datos escuchados:</Label>
                       <div className="min-h-24 p-4 bg-white rounded-xl border-2 border-pink-200 text-left">
@@ -477,46 +537,7 @@ const CargaDatosPrimaria = () => {
 
                     {voiceTranscript && (
                       <Button
-                        onClick={async () => {
-                          if (!voiceTranscript.trim()) {
-                            toast.error('¡Decí algunos datos primero!');
-                            return;
-                          }
-
-                          const values = voiceTranscript
-                            .trim()
-                            .split(/[\s,]+/)
-                            .filter(v => v.trim() !== '');
-
-                          if (values.length === 0) {
-                            toast.error('¡No escuché ningún dato!');
-                            return;
-                          }
-
-                          try {
-                            if (existingDataset) {
-                              await localStorageService.deleteDatasetsByProject(currentProjectId);
-                            }
-
-                            const dataset = {
-                              projectId: currentProjectId,
-                              rawData: values.map((val, idx) => ({ index: idx + 1, valor: val })),
-                              variables: [{
-                                name: variableName || 'valor',
-                                type: 'cualitativa_nominal',
-                                values: values
-                              }],
-                              source: 'voice'
-                            };
-
-                            await localStorageService.createDataset(dataset);
-                            toast.success('¡Datos guardados! 🎉');
-                            navigate('/graficos-primaria');
-                          } catch (error) {
-                            console.error('Error:', error);
-                            toast.error('Error al guardar datos');
-                          }
-                        }}
+                        onClick={saveVoiceData}
                         className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white rounded-full px-8 py-4 text-xl font-bold"
                       >
                         <Save className="w-6 h-6 mr-2" />
@@ -526,7 +547,6 @@ const CargaDatosPrimaria = () => {
                   </div>
                 )}
 
-                {/* Tips */}
                 <div className="mt-8 bg-pink-50 rounded-2xl p-6 border-2 border-pink-200">
                   <h4 className="font-bold text-pink-800 mb-2">💡 Tips para hablar:</h4>
                   <ul className="text-pink-700 space-y-1">
