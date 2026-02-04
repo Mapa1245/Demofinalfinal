@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '../components/ui/select';
 import { toast } from 'sonner';
+import localStorageService from '../services/localStorageService';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -33,10 +34,6 @@ const ReportesSecundario = () => {
 
   useEffect(() => {
     loadProjects();
-    const currentProjectId = localStorage.getItem('currentProjectId');
-    if (currentProjectId) {
-      setSelectedProject(currentProjectId);
-    }
   }, []);
 
   useEffect(() => {
@@ -49,9 +46,15 @@ const ReportesSecundario = () => {
 
   const loadProjects = async () => {
     try {
-      const response = await axios.get(`${API}/projects`);
-      const secundarioProjects = response.data.filter(p => p.educationLevel === 'secundario');
+      const secundarioProjects = await localStorageService.getProjects('secundario');
       setProjects(secundarioProjects);
+      
+      const currentProjectId = localStorage.getItem('currentProjectId');
+      if (currentProjectId && secundarioProjects.find(p => p.id === currentProjectId)) {
+        setSelectedProject(currentProjectId);
+      } else if (secundarioProjects.length > 0) {
+        setSelectedProject(secundarioProjects[0].id);
+      }
     } catch (error) {
       console.error('Error:', error);
     }
@@ -59,8 +62,8 @@ const ReportesSecundario = () => {
 
   const loadProjectDetails = async (projectId) => {
     try {
-      const response = await axios.get(`${API}/projects/${projectId}`);
-      setCurrentProject(response.data);
+      const project = await localStorageService.getProjectById(projectId);
+      setCurrentProject(project);
     } catch (error) {
       console.error('Error:', error);
     }
@@ -68,8 +71,8 @@ const ReportesSecundario = () => {
 
   const loadDatasets = async (projectId) => {
     try {
-      const response = await axios.get(`${API}/datasets/${projectId}`);
-      setDatasets(response.data);
+      const projectDatasets = await localStorageService.getDatasets(projectId);
+      setDatasets(projectDatasets);
     } catch (error) {
       console.error('Error:', error);
     }
@@ -77,9 +80,11 @@ const ReportesSecundario = () => {
 
   const loadExistingReport = async (projectId) => {
     try {
-      const response = await axios.get(`${API}/reports/${projectId}`);
-      if (response.data.length > 0) {
-        setReport(response.data[response.data.length - 1].content);
+      const reports = await localStorageService.getReports(projectId);
+      if (reports.length > 0) {
+        setReport(reports[reports.length - 1].content);
+      } else {
+        setReport('');
       }
     } catch (error) {
       console.error('Error:', error);
@@ -108,14 +113,85 @@ const ReportesSecundario = () => {
 
       if (response.data.report) {
         setReport(response.data.report);
+        await localStorageService.saveReport({
+          projectId: selectedProject,
+          content: response.data.report,
+          educationLevel: 'secundario'
+        });
         toast.success('Reporte generado exitosamente');
       }
     } catch (error) {
-      console.error('Error generando reporte:', error);
-      toast.error('Error al generar el reporte');
+      console.error('Error generando reporte con IA, usando fallback local:', error);
+      try {
+        const localReport = await generateLocalReport();
+        setReport(localReport);
+        toast.info('Reporte generado localmente (sin IA)');
+      } catch (localError) {
+        toast.error('Error al generar el reporte. Verificá que tengas datos cargados.');
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const generateLocalReport = async () => {
+    const project = await localStorageService.getProjectById(selectedProject);
+    const projectDatasets = await localStorageService.getDatasets(selectedProject);
+    
+    if (!projectDatasets || projectDatasets.length === 0) {
+      throw new Error('No hay datos');
+    }
+    
+    const dataset = projectDatasets[0];
+    let report = `# 📊 Reporte Estadístico: ${project.name}\n\n`;
+    report += `**Nivel:** Secundario\n`;
+    report += `**Fecha:** ${new Date().toLocaleDateString('es-AR')}\n\n`;
+    
+    if (dataset.variables && dataset.variables.length > 0) {
+      for (const variable of dataset.variables) {
+        report += `## Variable: ${variable.name}\n\n`;
+        
+        const values = variable.values;
+        const n = values.length;
+        
+        // Si es numérica
+        const numericValues = values.map(v => parseFloat(v)).filter(v => !isNaN(v));
+        if (numericValues.length === values.length) {
+          const sum = numericValues.reduce((a, b) => a + b, 0);
+          const mean = sum / n;
+          const sorted = [...numericValues].sort((a, b) => a - b);
+          const median = n % 2 === 0 ? (sorted[n/2-1] + sorted[n/2]) / 2 : sorted[Math.floor(n/2)];
+          const min = Math.min(...numericValues);
+          const max = Math.max(...numericValues);
+          const range = max - min;
+          
+          report += `- **N:** ${n}\n`;
+          report += `- **Media:** ${mean.toFixed(2)}\n`;
+          report += `- **Mediana:** ${median.toFixed(2)}\n`;
+          report += `- **Mínimo:** ${min}\n`;
+          report += `- **Máximo:** ${max}\n`;
+          report += `- **Rango:** ${range.toFixed(2)}\n\n`;
+        } else {
+          // Cualitativa
+          const frequency = {};
+          values.forEach(v => { frequency[v] = (frequency[v] || 0) + 1; });
+          const sorted = Object.entries(frequency).sort((a, b) => b[1] - a[1]);
+          
+          report += `- **N:** ${n}\n`;
+          report += `- **Categorías:** ${Object.keys(frequency).length}\n`;
+          report += `- **Moda:** ${sorted[0][0]} (${sorted[0][1]} ocurrencias)\n\n`;
+          
+          report += `| Categoría | Frecuencia | % |\n|---|---|---|\n`;
+          sorted.forEach(([cat, freq]) => {
+            report += `| ${cat} | ${freq} | ${((freq/n)*100).toFixed(1)}% |\n`;
+          });
+          report += '\n';
+        }
+      }
+    }
+    
+    report += `---\n*Reporte generado localmente*`;
+    return report;
   };
 
   const copyToClipboard = async () => {
