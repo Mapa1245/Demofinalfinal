@@ -349,7 +349,7 @@ const CargaDatosSecundario = () => {
         source: 'manual'
       };
 
-      await axios.post(`${API}/datasets`, dataset);
+      await localStorageService.createDataset(dataset);
       toast.success('¡Datos multivariados guardados!');
       navigate('/graficos-secundario');
     } catch (error) {
@@ -362,7 +362,7 @@ const CargaDatosSecundario = () => {
   const saveFrequencyTable = async () => {
     try {
       if (existingDataset) {
-        await axios.delete(`${API}/datasets/project/${currentProjectId}`);
+        await localStorageService.deleteDatasetsByProject(currentProjectId);
       }
 
       let values = [];
