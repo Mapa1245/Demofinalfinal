@@ -6,7 +6,7 @@ import { Button } from '../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
 import localStorageService from '../services/localStorageService';
-import { trackAnalysisRun } from '../utils/achievementTracker';
+import { trackAnalysisCompleted } from '../utils/achievementTracker';
 
 const AnalisisPrimaria = () => {
   const [projects, setProjects] = useState([]);
