@@ -61,8 +61,6 @@ const GraficosSuperior = () => {
 
   useEffect(() => {
     loadProjects();
-    const currentProjectId = localStorage.getItem('currentProjectId');
-    if (currentProjectId) setSelectedProject(currentProjectId);
   }, []);
 
   useEffect(() => {
@@ -76,6 +74,13 @@ const GraficosSuperior = () => {
     try {
       const superiorProjects = await localStorageService.getProjects('superior');
       setProjects(superiorProjects);
+      
+      const currentProjectId = localStorage.getItem('currentProjectId');
+      if (currentProjectId && superiorProjects.find(p => p.id === currentProjectId)) {
+        setSelectedProject(currentProjectId);
+      } else if (superiorProjects.length > 0) {
+        setSelectedProject(superiorProjects[0].id);
+      }
     } catch (error) {
       console.error('Error:', error);
     }
