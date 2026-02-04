@@ -351,6 +351,21 @@ const CargaDatosSuperior = () => {
             )}
           </div>
 
+          {/* Selector de Proyecto */}
+          <div className="bg-white rounded-2xl p-6 mb-6 border-2 border-emerald-200 shadow-sm">
+            <Label className="text-lg font-bold text-emerald-700 mb-3 block">📁 Seleccionar Proyecto:</Label>
+            <Select value={currentProjectId} onValueChange={handleProjectChange}>
+              <SelectTrigger className="text-base h-12">
+                <SelectValue placeholder="Seleccionar proyecto" />
+              </SelectTrigger>
+              <SelectContent>
+                {projects.map(p => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {existingDataset && (
             <div className="bg-teal-100 border-2 border-teal-400 rounded-2xl p-6 mb-6 flex items-center gap-4">
               <Edit className="w-8 h-8 text-teal-600" />
