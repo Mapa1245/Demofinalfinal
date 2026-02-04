@@ -221,7 +221,7 @@ const CargaDatosSuperior = () => {
 
     try {
       if (existingDataset) {
-        await axios.delete(`${API}/datasets/project/${currentProjectId}`);
+        await localStorageService.deleteDatasetsByProject(currentProjectId);
       }
 
       const dataset = {
@@ -235,7 +235,7 @@ const CargaDatosSuperior = () => {
         source: 'voice'
       };
 
-      await axios.post(`${API}/datasets`, dataset);
+      await localStorageService.createDataset(dataset);
       toast.success('Datos por voz guardados');
       navigate('/graficos-superior');
     } catch (error) {
@@ -259,7 +259,7 @@ const CargaDatosSuperior = () => {
 
       if (response.data.success) {
         if (existingDataset) {
-          await axios.delete(`${API}/datasets/project/${currentProjectId}`);
+          await localStorageService.deleteDatasetsByProject(currentProjectId);
         }
 
         const columns = response.data.columns;
@@ -282,7 +282,7 @@ const CargaDatosSuperior = () => {
           source: 'file'
         };
 
-        await axios.post(`${API}/datasets`, dataset);
+        await localStorageService.createDataset(dataset);
         toast.success(`Archivo cargado: ${response.data.rowCount} filas, ${columns.length} columnas`);
         navigate('/graficos-superior');
       }
