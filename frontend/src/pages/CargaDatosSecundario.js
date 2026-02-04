@@ -482,7 +482,7 @@ const CargaDatosSecundario = () => {
     }
   };
 
-  // Subir archivo
+  // Subir archivo - mantiene axios para procesamiento pero guarda localmente
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -497,9 +497,9 @@ const CargaDatosSecundario = () => {
       });
 
       if (response.data.success) {
-        // Guardar los datos del archivo
+        // Guardar los datos del archivo localmente
         if (existingDataset) {
-          await axios.delete(`${API}/datasets/project/${currentProjectId}`);
+          await localStorageService.deleteDatasetsByProject(currentProjectId);
         }
 
         const columns = response.data.columns;
@@ -523,7 +523,7 @@ const CargaDatosSecundario = () => {
           source: 'file'
         };
 
-        await axios.post(`${API}/datasets`, dataset);
+        await localStorageService.createDataset(dataset);
         toast.success(`Archivo cargado: ${response.data.rowCount} filas, ${columns.length} columnas`);
         navigate('/graficos-secundario');
       }
