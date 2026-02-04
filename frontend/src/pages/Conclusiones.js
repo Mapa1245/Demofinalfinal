@@ -11,6 +11,7 @@ import Navbar from '../components/Navbar';
 import { Button } from '../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
+import localStorageService from '../services/localStorageService';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -27,10 +28,13 @@ const Conclusiones = () => {
 
   const loadProjects = async () => {
     try {
-      const response = await axios.get(`${API}/projects`);
-      const primaryProjects = response.data.filter(p => p.educationLevel === 'primario');
+      const primaryProjects = await localStorageService.getProjects('primario');
       setProjects(primaryProjects);
-      if (primaryProjects.length > 0) {
+      
+      const savedProjectId = localStorage.getItem('currentProjectId');
+      if (savedProjectId && primaryProjects.find(p => p.id === savedProjectId)) {
+        setSelectedProject(savedProjectId);
+      } else if (primaryProjects.length > 0) {
         setSelectedProject(primaryProjects[0].id);
       }
     } catch (error) {
@@ -46,17 +50,92 @@ const Conclusiones = () => {
 
     setLoading(true);
     try {
+      // Primero intentamos con el backend (IA)
       const response = await axios.post(
         `${API}/reports/generate?project_id=${selectedProject}&education_level=primario`
       );
       setReport(response.data.report);
+      
+      // Guardar el reporte localmente
+      await localStorageService.saveReport({
+        projectId: selectedProject,
+        content: response.data.report,
+        educationLevel: 'primario'
+      });
+      
       toast.success('¡Reporte generado! 🎉');
     } catch (error) {
-      console.error('Error:', error);
-      toast.error('Error al generar el reporte');
+      console.error('Error con IA, generando conclusiones locales:', error);
+      
+      // Si falla el backend, generamos conclusiones básicas localmente
+      try {
+        const localReport = await generateLocalConclusions();
+        setReport(localReport);
+        toast.info('Conclusiones generadas localmente (sin IA)');
+      } catch (localError) {
+        console.error('Error generando conclusiones locales:', localError);
+        toast.error('Error al generar conclusiones. Verificá que tengas datos cargados.');
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const generateLocalConclusions = async () => {
+    const datasets = await localStorageService.getDatasets(selectedProject);
+    const project = await localStorageService.getProjectById(selectedProject);
+    
+    if (!datasets || datasets.length === 0) {
+      throw new Error('No hay datos cargados');
+    }
+    
+    const dataset = datasets[0];
+    const variable = dataset.variables?.[0];
+    
+    if (!variable || !variable.values || variable.values.length === 0) {
+      throw new Error('No hay valores en el dataset');
+    }
+    
+    const values = variable.values;
+    const total = values.length;
+    
+    // Calcular frecuencias
+    const frequency = {};
+    values.forEach(val => {
+      frequency[val] = (frequency[val] || 0) + 1;
+    });
+    
+    // Encontrar moda
+    const sortedByFreq = Object.entries(frequency).sort((a, b) => b[1] - a[1]);
+    const moda = sortedByFreq[0][0];
+    const modaCount = sortedByFreq[0][1];
+    const modaPercent = ((modaCount / total) * 100).toFixed(1);
+    
+    // Generar conclusiones
+    let report = `# 📊 Conclusiones de: ${project.name}\n\n`;
+    report += `## 📋 Resumen de los datos\n\n`;
+    report += `- **Variable analizada:** ${variable.name || 'valor'}\n`;
+    report += `- **Total de datos:** ${total}\n`;
+    report += `- **Valores diferentes:** ${Object.keys(frequency).length}\n\n`;
+    
+    report += `## 🏆 ¿Qué descubrimos?\n\n`;
+    report += `El valor que más se repite es **"${moda}"** con **${modaCount} veces** (${modaPercent}% del total).\n\n`;
+    
+    report += `## 📊 Tabla de frecuencias\n\n`;
+    report += `| Valor | Cantidad | Porcentaje |\n`;
+    report += `|-------|----------|------------|\n`;
+    sortedByFreq.forEach(([val, count]) => {
+      const percent = ((count / total) * 100).toFixed(1);
+      report += `| ${val} | ${count} | ${percent}% |\n`;
+    });
+    
+    report += `\n## 💡 ¿Qué significa esto?\n\n`;
+    report += `Según los datos recopilados, la mayoría de las respuestas fueron **"${moda}"**. `;
+    report += `Esto nos dice que es la opción más popular o común en el grupo analizado.\n\n`;
+    
+    report += `---\n*Conclusiones generadas automáticamente basadas en los datos locales.*`;
+    
+    return report;
   };
 
   return (

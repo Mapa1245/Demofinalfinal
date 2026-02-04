@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import axios from 'axios';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area,
   ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -22,9 +21,7 @@ import {
 } from '../components/ui/select';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+import localStorageService from '../services/localStorageService';
 
 const COLORS = ['#8B5CF6', '#6366F1', '#3B82F6', '#06B6D4', '#10B981', '#F59E0B', '#EF4444', '#EC4899'];
 
@@ -66,10 +63,6 @@ const GraficosSecundario = () => {
 
   useEffect(() => {
     loadProjects();
-    const currentProjectId = localStorage.getItem('currentProjectId');
-    if (currentProjectId) {
-      setSelectedProject(currentProjectId);
-    }
   }, []);
 
   useEffect(() => {
@@ -81,9 +74,15 @@ const GraficosSecundario = () => {
 
   const loadProjects = async () => {
     try {
-      const response = await axios.get(`${API}/projects`);
-      const secundarioProjects = response.data.filter(p => p.educationLevel === 'secundario');
+      const secundarioProjects = await localStorageService.getProjects('secundario');
       setProjects(secundarioProjects);
+      
+      const currentProjectId = localStorage.getItem('currentProjectId');
+      if (currentProjectId && secundarioProjects.find(p => p.id === currentProjectId)) {
+        setSelectedProject(currentProjectId);
+      } else if (secundarioProjects.length > 0) {
+        setSelectedProject(secundarioProjects[0].id);
+      }
     } catch (error) {
       console.error('Error:', error);
     }
@@ -91,8 +90,8 @@ const GraficosSecundario = () => {
 
   const loadProjectDetails = async (projectId) => {
     try {
-      const response = await axios.get(`${API}/projects/${projectId}`);
-      setCurrentProject(response.data);
+      const project = await localStorageService.getProjectById(projectId);
+      setCurrentProject(project);
     } catch (error) {
       console.error('Error:', error);
     }
@@ -100,11 +99,11 @@ const GraficosSecundario = () => {
 
   const loadDatasets = async (projectId) => {
     try {
-      const response = await axios.get(`${API}/datasets/${projectId}`);
-      setDatasets(response.data);
+      const projectDatasets = await localStorageService.getDatasets(projectId);
+      setDatasets(projectDatasets);
       
-      if (response.data.length > 0) {
-        const dataset = response.data[0];
+      if (projectDatasets.length > 0) {
+        const dataset = projectDatasets[0];
         setVariables(dataset.variables || []);
         
         if (dataset.variables && dataset.variables.length > 0) {

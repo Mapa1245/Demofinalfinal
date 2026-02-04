@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { Calculator, Volume2 } from 'lucide-react';
 import SidebarPrimary from '../components/SidebarPrimary';
 import Navbar from '../components/Navbar';
 import { Button } from '../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+import localStorageService from '../services/localStorageService';
+import { trackAnalysisCompleted } from '../utils/achievementTracker';
 
 const AnalisisPrimaria = () => {
   const [projects, setProjects] = useState([]);
@@ -21,7 +19,6 @@ const AnalisisPrimaria = () => {
   useEffect(() => {
     loadProjects();
     
-    // Escuchar cambios en el proyecto seleccionado desde otras páginas (storage event)
     const handleStorageChange = (e) => {
       if (e.key === 'currentProjectId' && e.newValue) {
         setSelectedProject(e.newValue);
@@ -29,7 +26,6 @@ const AnalisisPrimaria = () => {
       }
     };
     
-    // Escuchar cambios en la misma pestaña (custom event)
     const handleProjectChange = (e) => {
       if (e.detail && e.detail !== selectedProject) {
         setSelectedProject(e.detail);
@@ -48,11 +44,9 @@ const AnalisisPrimaria = () => {
 
   const loadProjects = async () => {
     try {
-      const response = await axios.get(`${API}/projects`);
-      const primaryProjects = response.data.filter(p => p.educationLevel === 'primario');
+      const primaryProjects = await localStorageService.getProjects('primario');
       setProjects(primaryProjects);
       
-      // Verificar si hay un proyecto guardado en localStorage
       const savedProjectId = localStorage.getItem('currentProjectId');
       
       if (savedProjectId && primaryProjects.find(p => p.id === savedProjectId)) {
@@ -71,13 +65,12 @@ const AnalisisPrimaria = () => {
 
   const loadDatasets = async (projectId) => {
     try {
-      const response = await axios.get(`${API}/datasets/${projectId}`);
-      setDatasets(response.data);
-      // Reiniciar estadísticas al cambiar de proyecto
+      const projectDatasets = await localStorageService.getDatasets(projectId);
+      setDatasets(projectDatasets);
       setStatistics(null);
       setFrequencyTable([]);
-      if (response.data.length > 0) {
-        calculateFrequencyTable(response.data[0]);
+      if (projectDatasets.length > 0) {
+        calculateFrequencyTable(projectDatasets[0]);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -128,24 +121,35 @@ const AnalisisPrimaria = () => {
     const numericValues = values.filter(v => !isNaN(parseFloat(v))).map(v => parseFloat(v));
     
     if (numericValues.length === 0) {
-      // Para datos no numéricos, solo calculamos la moda
       const mode = getMostFrequent(values);
-      setStatistics({ mode });
+      setStatistics({ mode, type: 'qualitative' });
+      trackAnalysisCompleted();
       toast.success('¡Cálculo completado! 🎯');
       return;
     }
 
-    try {
-      const response = await axios.post(
-        `${API}/statistics/calculate?projectId=${selectedProject}&variableName=valor`,
-        numericValues
-      );
-      setStatistics(response.data);
-      toast.success('¡Cálculos completados! 🎯');
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Error al calcular estadísticas');
-    }
+    // Calcular estadísticas localmente
+    const sum = numericValues.reduce((a, b) => a + b, 0);
+    const mean = sum / numericValues.length;
+    
+    const sorted = [...numericValues].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    const median = sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    
+    const mode = getMostFrequent(numericValues);
+    const range = Math.max(...numericValues) - Math.min(...numericValues);
+
+    const stats = {
+      mean: Number(mean.toFixed(2)),
+      median: Number(median.toFixed(2)),
+      mode,
+      range: Number(range.toFixed(2)),
+      type: 'quantitative'
+    };
+
+    setStatistics(stats);
+    trackAnalysisCompleted();
+    toast.success('¡Cálculos completados! 🎯');
   };
 
   const getMostFrequent = (arr) => {
@@ -163,11 +167,10 @@ const AnalisisPrimaria = () => {
     setSpeaking(true);
     let text = '';
 
-    // Construir texto basado en las estadísticas disponibles
-    if (statistics.mode && !statistics.mean) {
+    if (statistics.type === 'qualitative') {
       text = `La moda es ${statistics.mode}. Esto significa que ${statistics.mode} es el valor que más se repite en los datos.`;
     } else {
-      text = `La media es ${statistics.mean?.toFixed(2)}. La mediana es ${statistics.median}. La moda es ${statistics.mode}. El rango es ${statistics.range}.`;
+      text = `La media es ${statistics.mean}. La mediana es ${statistics.median}. La moda es ${statistics.mode}. El rango es ${statistics.range}.`;
     }
 
     const utterance = new SpeechSynthesisUtterance(text);
@@ -190,36 +193,28 @@ const AnalisisPrimaria = () => {
         <div className="p-4 sm:p-6 lg:p-8">
           <div className="bg-gradient-to-r from-orange-300 via-amber-300 to-yellow-300 rounded-2xl sm:rounded-3xl p-6 sm:p-8 mb-6 sm:mb-8 text-white shadow-2xl">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-black mb-2 flex items-center gap-3">
-              <Calculator className="w-10 h-10 sm:w-12 sm:h-12" />
-              ¡Análisis!
+              <Calculator className="w-10 h-10 sm:w-12 sm:h-12" />¡Análisis!
             </h1>
             <p className="text-lg sm:text-xl lg:text-2xl font-accent">Descubrí qué nos dicen los datos</p>
           </div>
 
-          {/* Project Selector */}
           {projects.length > 0 && (
             <div className="bg-white rounded-3xl p-6 mb-6 border-4 border-blue-200">
               <label className="text-xl font-bold mb-3 block">Elegí tu Misión:</label>
               <Select value={selectedProject} onValueChange={(id) => { 
                 setSelectedProject(id); 
                 localStorage.setItem('currentProjectId', id);
-                // Disparar evento personalizado para otras pestañas
                 window.dispatchEvent(new CustomEvent('projectChanged', { detail: id }));
                 loadDatasets(id); 
               }}>
-                <SelectTrigger className="text-lg">
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger className="text-lg"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {projects.map(p => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                  ))}
+                  {projects.map(p => (<SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
           )}
 
-          {/* Frequency Table */}
           {frequencyTable.length > 0 && (
             <div className="bg-white rounded-3xl p-8 mb-6 border-4 border-purple-200">
               <h2 className="text-3xl font-bold text-gray-800 mb-6">📊 Tabla de Frecuencia</h2>
@@ -252,18 +247,13 @@ const AnalisisPrimaria = () => {
             </div>
           )}
 
-          {/* Statistics */}
           <div className="bg-white rounded-3xl p-8 mb-6 border-4 border-green-200">
             <h2 className="text-3xl font-bold text-gray-800 mb-6">🧠 Medidas de Tendencia Central</h2>
             
             {!statistics ? (
               <div className="text-center py-8">
-                <Button
-                  onClick={calculateStatistics}
-                  className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white rounded-full px-8 py-4 text-xl font-bold"
-                >
-                  <Calculator className="w-6 h-6 mr-3" />
-                  ¡Calcular Medidas!
+                <Button onClick={calculateStatistics} className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white rounded-full px-8 py-4 text-xl font-bold">
+                  <Calculator className="w-6 h-6 mr-3" />¡Calcular Medidas!
                 </Button>
               </div>
             ) : (
@@ -274,7 +264,7 @@ const AnalisisPrimaria = () => {
                       <div className="bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl p-6 text-white text-center">
                         <div className="text-5xl mb-2">📊</div>
                         <div className="text-sm opacity-90 mb-1">Media (Promedio)</div>
-                        <div className="text-4xl font-black">{statistics.mean?.toFixed(2)}</div>
+                        <div className="text-4xl font-black">{statistics.mean}</div>
                       </div>
                       <div className="bg-gradient-to-br from-purple-400 to-purple-600 rounded-2xl p-6 text-white text-center">
                         <div className="text-5xl mb-2">🎯</div>
@@ -303,11 +293,7 @@ const AnalisisPrimaria = () => {
                 </div>
 
                 <div className="text-center">
-                  <Button
-                    onClick={readResults}
-                    disabled={speaking}
-                    className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white rounded-full px-8 py-4 text-xl font-bold"
-                  >
+                  <Button onClick={readResults} disabled={speaking} className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white rounded-full px-8 py-4 text-xl font-bold">
                     <Volume2 className={`w-6 h-6 mr-3 ${speaking ? 'animate-pulse' : ''}`} />
                     {speaking ? '🔊 Leyendo...' : '🔊 Leer Resultados'}
                   </Button>

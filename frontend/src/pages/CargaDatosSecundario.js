@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from '../components/ui/select';
 import { toast } from 'sonner';
+import localStorageService from '../services/localStorageService';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -28,6 +29,7 @@ const CargaDatosSecundario = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   
+  const [projects, setProjects] = useState([]);
   const [currentProjectId, setCurrentProjectId] = useState('');
   const [currentProject, setCurrentProject] = useState(null);
   const [analysisType, setAnalysisType] = useState('univariado');
@@ -58,17 +60,48 @@ const CargaDatosSecundario = () => {
   const [recognition, setRecognition] = useState(null);
 
   useEffect(() => {
-    const projectId = localStorage.getItem('currentProjectId');
-    if (projectId) {
-      setCurrentProjectId(projectId);
-      loadProjectDetails(projectId);
-      loadExistingData(projectId);
-    } else {
-      toast.error('No hay ningún proyecto seleccionado');
-      navigate('/proyectos-secundario');
-    }
+    loadProjects();
+    initSpeechRecognition();
+  }, []);
 
-    // Inicializar reconocimiento de voz
+  const loadProjects = async () => {
+    try {
+      const secundarioProjects = await localStorageService.getProjects('secundario');
+      setProjects(secundarioProjects);
+      
+      const projectId = localStorage.getItem('currentProjectId');
+      if (projectId && secundarioProjects.find(p => p.id === projectId)) {
+        setCurrentProjectId(projectId);
+        loadProjectDetails(projectId);
+        loadExistingData(projectId);
+      } else if (secundarioProjects.length > 0) {
+        const firstProject = secundarioProjects[0].id;
+        setCurrentProjectId(firstProject);
+        localStorage.setItem('currentProjectId', firstProject);
+        loadProjectDetails(firstProject);
+        loadExistingData(firstProject);
+      } else {
+        toast.error('No hay ningún proyecto. Creá uno primero.');
+        navigate('/proyectos-secundario');
+      }
+    } catch (error) {
+      console.error('Error cargando proyectos:', error);
+    }
+  };
+
+  const handleProjectChange = (projectId) => {
+    setCurrentProjectId(projectId);
+    localStorage.setItem('currentProjectId', projectId);
+    setManualData('');
+    setVariableName('');
+    setExistingDataset(null);
+    setVoiceTranscript('');
+    setMultiVariables([{ name: '', type: 'cuantitativa_continua', values: '' }]);
+    loadProjectDetails(projectId);
+    loadExistingData(projectId);
+  };
+
+  const initSpeechRecognition = () => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const recognitionInstance = new SpeechRecognition();
@@ -97,19 +130,13 @@ const CargaDatosSecundario = () => {
 
       setRecognition(recognitionInstance);
     }
-
-    return () => {
-      if (recognition) {
-        recognition.stop();
-      }
-    };
-  }, [navigate]);
+  };
 
   const loadProjectDetails = async (projectId) => {
     try {
-      const response = await axios.get(`${API}/projects/${projectId}`);
-      setCurrentProject(response.data);
-      setAnalysisType(response.data.analysisType || 'univariado');
+      const project = await localStorageService.getProjectById(projectId);
+      setCurrentProject(project);
+      setAnalysisType(project.analysisType || 'univariado');
     } catch (error) {
       console.error('Error cargando proyecto:', error);
     }
@@ -117,9 +144,9 @@ const CargaDatosSecundario = () => {
 
   const loadExistingData = async (projectId) => {
     try {
-      const response = await axios.get(`${API}/datasets/${projectId}`);
-      if (response.data.length > 0) {
-        const dataset = response.data[0];
+      const datasets = await localStorageService.getDatasets(projectId);
+      if (datasets.length > 0) {
+        const dataset = datasets[0];
         setExistingDataset(dataset);
         
         // Pre-llenar datos para edición
@@ -278,7 +305,7 @@ const CargaDatosSecundario = () => {
     try {
       // Eliminar datasets existentes si estamos editando
       if (existingDataset) {
-        await axios.delete(`${API}/datasets/project/${currentProjectId}`);
+        await localStorageService.deleteDatasetsByProject(currentProjectId);
       }
 
       const dataset = {
@@ -292,7 +319,7 @@ const CargaDatosSecundario = () => {
         source: 'manual'
       };
 
-      await axios.post(`${API}/datasets`, dataset);
+      await localStorageService.createDataset(dataset);
       toast.success('¡Datos guardados exitosamente!');
       navigate('/graficos-secundario');
     } catch (error) {
@@ -312,7 +339,7 @@ const CargaDatosSecundario = () => {
 
     try {
       if (existingDataset) {
-        await axios.delete(`${API}/datasets/project/${currentProjectId}`);
+        await localStorageService.deleteDatasetsByProject(currentProjectId);
       }
 
       const variables = validVars.map(v => {
@@ -348,7 +375,7 @@ const CargaDatosSecundario = () => {
         source: 'manual'
       };
 
-      await axios.post(`${API}/datasets`, dataset);
+      await localStorageService.createDataset(dataset);
       toast.success('¡Datos multivariados guardados!');
       navigate('/graficos-secundario');
     } catch (error) {
@@ -361,7 +388,7 @@ const CargaDatosSecundario = () => {
   const saveFrequencyTable = async () => {
     try {
       if (existingDataset) {
-        await axios.delete(`${API}/datasets/project/${currentProjectId}`);
+        await localStorageService.deleteDatasetsByProject(currentProjectId);
       }
 
       let values = [];
@@ -410,7 +437,7 @@ const CargaDatosSecundario = () => {
         source: 'frequency_table'
       };
 
-      await axios.post(`${API}/datasets`, dataset);
+      await localStorageService.createDataset(dataset);
       toast.success('¡Tabla de frecuencia guardada!');
       navigate('/graficos-secundario');
     } catch (error) {
@@ -441,7 +468,7 @@ const CargaDatosSecundario = () => {
 
     try {
       if (existingDataset) {
-        await axios.delete(`${API}/datasets/project/${currentProjectId}`);
+        await localStorageService.deleteDatasetsByProject(currentProjectId);
       }
 
       const dataset = {
@@ -455,7 +482,7 @@ const CargaDatosSecundario = () => {
         source: 'voice'
       };
 
-      await axios.post(`${API}/datasets`, dataset);
+      await localStorageService.createDataset(dataset);
       toast.success('¡Datos por voz guardados!');
       navigate('/graficos-secundario');
     } catch (error) {
@@ -481,7 +508,7 @@ const CargaDatosSecundario = () => {
     }
   };
 
-  // Subir archivo
+  // Subir archivo - mantiene axios para procesamiento pero guarda localmente
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -496,9 +523,9 @@ const CargaDatosSecundario = () => {
       });
 
       if (response.data.success) {
-        // Guardar los datos del archivo
+        // Guardar los datos del archivo localmente
         if (existingDataset) {
-          await axios.delete(`${API}/datasets/project/${currentProjectId}`);
+          await localStorageService.deleteDatasetsByProject(currentProjectId);
         }
 
         const columns = response.data.columns;
@@ -522,7 +549,7 @@ const CargaDatosSecundario = () => {
           source: 'file'
         };
 
-        await axios.post(`${API}/datasets`, dataset);
+        await localStorageService.createDataset(dataset);
         toast.success(`Archivo cargado: ${response.data.rowCount} filas, ${columns.length} columnas`);
         navigate('/graficos-secundario');
       }
@@ -564,6 +591,21 @@ const CargaDatosSecundario = () => {
                 Proyecto: <strong>{currentProject.name}</strong>
               </div>
             )}
+          </div>
+
+          {/* Selector de Proyecto */}
+          <div className="bg-white rounded-2xl p-6 mb-6 border-2 border-purple-200 shadow-sm">
+            <Label className="text-lg font-bold text-purple-700 mb-3 block">📁 Seleccionar Proyecto:</Label>
+            <Select value={currentProjectId} onValueChange={handleProjectChange}>
+              <SelectTrigger className="text-base h-12">
+                <SelectValue placeholder="Seleccionar proyecto" />
+              </SelectTrigger>
+              <SelectContent>
+                {projects.map(p => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {existingDataset && (

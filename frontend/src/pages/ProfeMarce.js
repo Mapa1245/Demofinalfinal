@@ -127,7 +127,7 @@ const ProfeMarce = () => {
           </div>
 
           {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4" data-testid="chat-messages">
+          <div className="flex-1 overflow-y-auto p-6 space-y-4 min-h-0" data-testid="chat-messages">
             {messages.map((msg, idx) => (
               <div
                 key={idx}

@@ -14,6 +14,7 @@ import Navbar from '../components/Navbar';
 import { Button } from '../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
+import localStorageService from '../services/localStorageService';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -97,8 +98,7 @@ const Descargar = () => {
 
   const loadProjects = async () => {
     try {
-      const response = await axios.get(`${API}/projects`);
-      const primaryProjects = response.data.filter(p => p.educationLevel === 'primario');
+      const primaryProjects = await localStorageService.getProjects('primario');
       setProjects(primaryProjects);
       
       const currentProjectId = localStorage.getItem('currentProjectId');
@@ -118,27 +118,27 @@ const Descargar = () => {
 
   const loadProjectData = async (projectId) => {
     try {
-      const [projectRes, datasetsRes, statsRes, reportsRes] = await Promise.all([
-        axios.get(`${API}/projects/${projectId}`),
-        axios.get(`${API}/datasets/${projectId}`),
-        axios.get(`${API}/statistics/${projectId}`),
-        axios.get(`${API}/reports/${projectId}`)
+      const [project, datasets, statistics, reports] = await Promise.all([
+        localStorageService.getProjectById(projectId),
+        localStorageService.getDatasets(projectId),
+        localStorageService.getStatistics(projectId),
+        localStorageService.getReports(projectId)
       ]);
 
       setProjectData({
-        project: projectRes.data,
-        datasets: datasetsRes.data,
-        statistics: statsRes.data
+        project: project,
+        datasets: datasets,
+        statistics: statistics
       });
 
-      if (reportsRes.data && reportsRes.data.length > 0) {
-        setConclusions(reportsRes.data[reportsRes.data.length - 1].content);
+      if (reports && reports.length > 0) {
+        setConclusions(reports[reports.length - 1].content);
       } else {
         setConclusions('');
       }
 
-      if (datasetsRes.data.length > 0 && datasetsRes.data[0].variables) {
-        const variable = datasetsRes.data[0].variables[0];
+      if (datasets.length > 0 && datasets[0].variables) {
+        const variable = datasets[0].variables[0];
         if (variable && variable.values) {
           const valueCounts = {};
           variable.values.forEach(val => {
@@ -462,31 +462,47 @@ const Descargar = () => {
         
         toast.info('Importando proyecto...');
         
-        // Crear proyecto
-        const projectRes = await axios.post(`${API}/projects`, {
-          name: importedData.project.name + ' (Importado)',
-          description: importedData.project.description,
-          educationLevel: 'primario'
+        // Crear proyecto (mantener nombre original)
+        const newProject = await localStorageService.createProject({
+          name: importedData.project.name,
+          description: importedData.project.description || '',
+          educationLevel: 'primario',
+          analysisType: importedData.project.analysisType || 'univariado'
         });
         
-        const newProjectId = projectRes.data.id;
+        const newProjectId = newProject.id;
         
         // Importar datasets
-        for (const dataset of importedData.datasets) {
-          await axios.post(`${API}/datasets`, {
-            projectId: newProjectId,
-            name: dataset.name,
-            variables: dataset.variables
-          });
+        if (importedData.datasets) {
+          for (const dataset of importedData.datasets) {
+            await localStorageService.createDataset({
+              projectId: newProjectId,
+              name: dataset.name,
+              rawData: dataset.rawData || [],
+              variables: dataset.variables || [],
+              source: 'imported'
+            });
+          }
         }
         
         // Importar estadísticas si existen
         if (importedData.statistics && importedData.statistics.length > 0) {
           for (const stat of importedData.statistics) {
-            await axios.post(`${API}/statistics`, {
+            await localStorageService.saveStatistics({
               projectId: newProjectId,
               variableName: stat.variableName,
               ...stat
+            });
+          }
+        }
+        
+        // Importar reportes si existen
+        if (importedData.reports && importedData.reports.length > 0) {
+          for (const report of importedData.reports) {
+            await localStorageService.saveReport({
+              projectId: newProjectId,
+              content: report.content,
+              educationLevel: 'primario'
             });
           }
         }

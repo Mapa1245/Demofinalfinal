@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
 import { 
   Calculator, TrendingUp, BarChart3, ChevronDown, ChevronUp, 
   Sigma, Target, Activity, GitBranch, Percent
@@ -17,9 +16,7 @@ import {
   SelectValue,
 } from '../components/ui/select';
 import { toast } from 'sonner';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+import localStorageService from '../services/localStorageService';
 
 const AnalisisSuperior = () => {
   const [projects, setProjects] = useState([]);
@@ -75,8 +72,7 @@ const AnalisisSuperior = () => {
 
   const loadProjects = async () => {
     try {
-      const response = await axios.get(`${API}/projects`);
-      const superiorProjects = response.data.filter(p => p.educationLevel === 'superior');
+      const superiorProjects = await localStorageService.getProjects('superior');
       setProjects(superiorProjects);
     } catch (error) {
       console.error('Error:', error);
@@ -85,8 +81,8 @@ const AnalisisSuperior = () => {
 
   const loadProjectDetails = async (projectId) => {
     try {
-      const response = await axios.get(`${API}/projects/${projectId}`);
-      setCurrentProject(response.data);
+      const project = await localStorageService.getProjectById(projectId);
+      setCurrentProject(project);
     } catch (error) {
       console.error('Error:', error);
     }
@@ -94,11 +90,11 @@ const AnalisisSuperior = () => {
 
   const loadDatasets = async (projectId) => {
     try {
-      const response = await axios.get(`${API}/datasets/${projectId}`);
-      setDatasets(response.data);
+      const projectDatasets = await localStorageService.getDatasets(projectId);
+      setDatasets(projectDatasets);
       
-      if (response.data.length > 0) {
-        const dataset = response.data[0];
+      if (projectDatasets.length > 0) {
+        const dataset = projectDatasets[0];
         setVariables(dataset.variables || []);
         
         if (dataset.variables && dataset.variables.length > 0) {

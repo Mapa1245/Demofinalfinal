@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { Target, Trophy, Plus, Play, Trash2, Upload } from 'lucide-react';
 import SidebarPrimary from '../components/SidebarPrimary';
 import Navbar from '../components/Navbar';
@@ -10,9 +9,7 @@ import { Label } from '../components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '../components/ui/dialog';
 import { toast } from 'sonner';
 import { trackProjectCreated } from '../utils/achievementTracker';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+import localStorageService from '../services/localStorageService';
 
 const Misiones = () => {
   const navigate = useNavigate();
@@ -26,8 +23,8 @@ const Misiones = () => {
 
   const loadProjects = async () => {
     try {
-      const response = await axios.get(`${API}/projects`);
-      setProjects(response.data.filter(p => p.educationLevel === 'primario'));
+      const allProjects = await localStorageService.getProjects('primario');
+      setProjects(allProjects);
     } catch (error) {
       console.error('Error:', error);
     }
@@ -46,29 +43,48 @@ const Misiones = () => {
         const text = await file.text();
         const importedData = JSON.parse(text);
         
-        // Validar estructura
-        if (!importedData.project || !importedData.datasets) {
-          toast.error('Archivo inválido');
+        // Validar estructura - aceptar múltiples formatos
+        const hasProject = importedData.project || importedData.name;
+        const hasDatasets = importedData.datasets || importedData.variables;
+        
+        if (!hasProject && !hasDatasets) {
+          toast.error('Archivo inválido - debe contener proyecto y datos');
           return;
         }
         
         toast.info('Importando misión...');
         
-        // Crear proyecto
-        const projectRes = await axios.post(`${API}/projects`, {
-          name: importedData.project.name + ' (Importado)',
-          description: importedData.project.description,
-          educationLevel: 'primario'
+        // Obtener nombre del proyecto (mantener el original)
+        const projectName = importedData.project?.name || importedData.name || 'Misión Importada';
+        
+        // Crear proyecto localmente (mantener nombre original sin " (Importado)")
+        const newProject = await localStorageService.createProject({
+          name: projectName,
+          description: importedData.project?.description || importedData.description || '',
+          educationLevel: 'primario',
+          analysisType: importedData.project?.analysisType || importedData.analysisType || 'univariado'
         });
         
-        const newProjectId = projectRes.data.id;
+        const newProjectId = newProject.id;
         
         // Importar datasets
-        for (const dataset of importedData.datasets) {
-          await axios.post(`${API}/datasets`, {
+        if (importedData.datasets && importedData.datasets.length > 0) {
+          for (const dataset of importedData.datasets) {
+            await localStorageService.createDataset({
+              projectId: newProjectId,
+              name: dataset.name,
+              rawData: dataset.rawData || [],
+              variables: dataset.variables || [],
+              source: 'imported'
+            });
+          }
+        } else if (importedData.variables) {
+          // Formato simplificado
+          await localStorageService.createDataset({
             projectId: newProjectId,
-            name: dataset.name,
-            variables: dataset.variables
+            name: 'datos',
+            variables: importedData.variables,
+            source: 'imported'
           });
         }
         
@@ -84,7 +100,7 @@ const Misiones = () => {
         
       } catch (error) {
         console.error('Error:', error);
-        toast.error('Error al importar misión');
+        toast.error('Error al importar misión - verificá el formato del archivo');
       }
     };
     
@@ -151,8 +167,8 @@ const Misiones = () => {
         description: mission.description
       };
 
-      const response = await axios.post(`${API}/projects`, projectData);
-      const projectId = response.data.id;
+      const newProject = await localStorageService.createProject(projectData);
+      const projectId = newProject.id;
 
       const datasetData = {
         projectId: projectId,
@@ -165,7 +181,7 @@ const Misiones = () => {
         source: 'example'
       };
 
-      await axios.post(`${API}/datasets`, datasetData);
+      await localStorageService.createDataset(datasetData);
       
       // Track achievement
       trackProjectCreated(mission.title);
@@ -185,7 +201,7 @@ const Misiones = () => {
     }
 
     try {
-      const response = await axios.post(`${API}/projects`, {
+      const newProject = await localStorageService.createProject({
         name: newProjectName,
         educationLevel: 'primario',
         analysisType: 'univariado',
@@ -200,7 +216,7 @@ const Misiones = () => {
       trackProjectCreated(newProjectName);
       
       // Redirigir a carga de datos con el ID del proyecto
-      localStorage.setItem('currentProjectId', response.data.id);
+      localStorage.setItem('currentProjectId', newProject.id);
       navigate('/carga-datos-primaria');
     } catch (error) {
       console.error('Error:', error);
@@ -212,7 +228,7 @@ const Misiones = () => {
     if (!window.confirm(`¿Estás seguro de eliminar "${projectName}"?`)) return;
 
     try {
-      await axios.delete(`${API}/projects/${projectId}`);
+      await localStorageService.deleteProject(projectId);
       toast.success('Misión eliminada');
       loadProjects();
     } catch (error) {

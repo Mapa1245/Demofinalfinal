@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { 
   PlusCircle, FolderOpen, Trash2, Edit, Play, Upload, 
   FileSpreadsheet, Zap, TrendingUp, GraduationCap
@@ -28,9 +27,7 @@ import {
   DialogTrigger,
 } from '../components/ui/dialog';
 import { toast } from 'sonner';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+import localStorageService from '../services/localStorageService';
 
 const ProyectosSuperior = () => {
   const navigate = useNavigate();
@@ -116,8 +113,7 @@ const ProyectosSuperior = () => {
 
   const loadProjects = async () => {
     try {
-      const response = await axios.get(`${API}/projects`);
-      const superiorProjects = response.data.filter(p => p.educationLevel === 'superior');
+      const superiorProjects = await localStorageService.getProjects('superior');
       setProjects(superiorProjects);
     } catch (error) {
       console.error('Error cargando proyectos:', error);
@@ -134,7 +130,7 @@ const ProyectosSuperior = () => {
     }
 
     try {
-      const response = await axios.post(`${API}/projects`, {
+      const createdProject = await localStorageService.createProject({
         ...newProject,
         educationLevel: 'superior'
       });
@@ -143,7 +139,7 @@ const ProyectosSuperior = () => {
       setShowCreateDialog(false);
       setNewProject({ name: '', analysisType: 'univariado', description: '' });
       
-      localStorage.setItem('currentProjectId', response.data.id);
+      localStorage.setItem('currentProjectId', createdProject.id);
       navigate('/carga-datos-superior');
     } catch (error) {
       console.error('Error creando proyecto:', error);
@@ -153,14 +149,14 @@ const ProyectosSuperior = () => {
 
   const loadExampleProject = async (example) => {
     try {
-      const projectResponse = await axios.post(`${API}/projects`, {
+      const newProject = await localStorageService.createProject({
         name: example.title,
         educationLevel: 'superior',
         analysisType: example.type,
         description: example.description
       });
       
-      const projectId = projectResponse.data.id;
+      const projectId = newProject.id;
 
       // Crear variables a partir de los datos del ejemplo
       const variableNames = Object.keys(example.data);
@@ -188,7 +184,7 @@ const ProyectosSuperior = () => {
         source: 'example'
       };
 
-      await axios.post(`${API}/datasets`, datasetPayload);
+      await localStorageService.createDataset(datasetPayload);
       
       toast.success(`Proyecto "${example.title}" cargado exitosamente`);
       loadProjects();
@@ -202,7 +198,7 @@ const ProyectosSuperior = () => {
     if (!window.confirm(`¿Estás seguro de eliminar "${projectName}"?`)) return;
 
     try {
-      await axios.delete(`${API}/projects/${projectId}`);
+      await localStorageService.deleteProject(projectId);
       toast.success('Proyecto eliminado');
       loadProjects();
     } catch (error) {
@@ -220,7 +216,7 @@ const ProyectosSuperior = () => {
     if (!editingProject) return;
 
     try {
-      await axios.put(`${API}/projects/${editingProject.id}`, {
+      await localStorageService.updateProject(editingProject.id, {
         name: editingProject.name,
         description: editingProject.description,
         analysisType: editingProject.analysisType
@@ -249,7 +245,7 @@ const ProyectosSuperior = () => {
       const text = await file.text();
       const projectData = JSON.parse(text);
       
-      const response = await axios.post(`${API}/projects`, {
+      const newProject = await localStorageService.createProject({
         name: projectData.name || 'Proyecto Importado',
         educationLevel: 'superior',
         analysisType: projectData.analysisType || 'univariado',
@@ -258,9 +254,9 @@ const ProyectosSuperior = () => {
 
       if (projectData.datasets && projectData.datasets.length > 0) {
         for (const dataset of projectData.datasets) {
-          await axios.post(`${API}/datasets`, {
+          await localStorageService.createDataset({
             ...dataset,
-            projectId: response.data.id
+            projectId: newProject.id
           });
         }
       }

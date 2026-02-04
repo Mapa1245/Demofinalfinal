@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import axios from 'axios';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area,
   ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -21,9 +20,7 @@ import {
 } from '../components/ui/select';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+import localStorageService from '../services/localStorageService';
 
 const COLORS = ['#10B981', '#14B8A6', '#06B6D4', '#3B82F6', '#6366F1', '#8B5CF6', '#EC4899', '#F59E0B'];
 
@@ -64,8 +61,6 @@ const GraficosSuperior = () => {
 
   useEffect(() => {
     loadProjects();
-    const currentProjectId = localStorage.getItem('currentProjectId');
-    if (currentProjectId) setSelectedProject(currentProjectId);
   }, []);
 
   useEffect(() => {
@@ -77,9 +72,15 @@ const GraficosSuperior = () => {
 
   const loadProjects = async () => {
     try {
-      const response = await axios.get(`${API}/projects`);
-      const superiorProjects = response.data.filter(p => p.educationLevel === 'superior');
+      const superiorProjects = await localStorageService.getProjects('superior');
       setProjects(superiorProjects);
+      
+      const currentProjectId = localStorage.getItem('currentProjectId');
+      if (currentProjectId && superiorProjects.find(p => p.id === currentProjectId)) {
+        setSelectedProject(currentProjectId);
+      } else if (superiorProjects.length > 0) {
+        setSelectedProject(superiorProjects[0].id);
+      }
     } catch (error) {
       console.error('Error:', error);
     }
@@ -87,8 +88,8 @@ const GraficosSuperior = () => {
 
   const loadProjectDetails = async (projectId) => {
     try {
-      const response = await axios.get(`${API}/projects/${projectId}`);
-      setCurrentProject(response.data);
+      const project = await localStorageService.getProjectById(projectId);
+      setCurrentProject(project);
     } catch (error) {
       console.error('Error:', error);
     }
@@ -96,11 +97,11 @@ const GraficosSuperior = () => {
 
   const loadDatasets = async (projectId) => {
     try {
-      const response = await axios.get(`${API}/datasets/${projectId}`);
-      setDatasets(response.data);
+      const projectDatasets = await localStorageService.getDatasets(projectId);
+      setDatasets(projectDatasets);
       
-      if (response.data.length > 0) {
-        const dataset = response.data[0];
+      if (projectDatasets.length > 0) {
+        const dataset = projectDatasets[0];
         setVariables(dataset.variables || []);
         
         if (dataset.variables && dataset.variables.length > 0) {

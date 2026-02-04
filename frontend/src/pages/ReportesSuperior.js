@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '../components/ui/select';
 import { toast } from 'sonner';
+import localStorageService from '../services/localStorageService';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -33,8 +34,6 @@ const ReportesSuperior = () => {
 
   useEffect(() => {
     loadProjects();
-    const currentProjectId = localStorage.getItem('currentProjectId');
-    if (currentProjectId) setSelectedProject(currentProjectId);
   }, []);
 
   useEffect(() => {
@@ -47,8 +46,15 @@ const ReportesSuperior = () => {
 
   const loadProjects = async () => {
     try {
-      const response = await axios.get(`${API}/projects`);
-      setProjects(response.data.filter(p => p.educationLevel === 'superior'));
+      const superiorProjects = await localStorageService.getProjects('superior');
+      setProjects(superiorProjects);
+      
+      const currentProjectId = localStorage.getItem('currentProjectId');
+      if (currentProjectId && superiorProjects.find(p => p.id === currentProjectId)) {
+        setSelectedProject(currentProjectId);
+      } else if (superiorProjects.length > 0) {
+        setSelectedProject(superiorProjects[0].id);
+      }
     } catch (error) {
       console.error('Error:', error);
     }
@@ -56,8 +62,8 @@ const ReportesSuperior = () => {
 
   const loadProjectDetails = async (projectId) => {
     try {
-      const response = await axios.get(`${API}/projects/${projectId}`);
-      setCurrentProject(response.data);
+      const project = await localStorageService.getProjectById(projectId);
+      setCurrentProject(project);
     } catch (error) {
       console.error('Error:', error);
     }
@@ -65,8 +71,8 @@ const ReportesSuperior = () => {
 
   const loadDatasets = async (projectId) => {
     try {
-      const response = await axios.get(`${API}/datasets/${projectId}`);
-      setDatasets(response.data);
+      const projectDatasets = await localStorageService.getDatasets(projectId);
+      setDatasets(projectDatasets);
     } catch (error) {
       console.error('Error:', error);
     }
@@ -74,9 +80,11 @@ const ReportesSuperior = () => {
 
   const loadExistingReport = async (projectId) => {
     try {
-      const response = await axios.get(`${API}/reports/${projectId}`);
-      if (response.data.length > 0) {
-        setReport(response.data[response.data.length - 1].content);
+      const reports = await localStorageService.getReports(projectId);
+      if (reports.length > 0) {
+        setReport(reports[reports.length - 1].content);
+      } else {
+        setReport('');
       }
     } catch (error) {
       console.error('Error:', error);
@@ -100,14 +108,101 @@ const ReportesSuperior = () => {
       });
       if (response.data.report) {
         setReport(response.data.report);
+        await localStorageService.saveReport({
+          projectId: selectedProject,
+          content: response.data.report,
+          educationLevel: 'superior'
+        });
         toast.success('Reporte generado exitosamente');
       }
     } catch (error) {
-      console.error('Error:', error);
-      toast.error('Error al generar el reporte');
+      console.error('Error generando reporte con IA, usando fallback local:', error);
+      try {
+        const localReport = await generateLocalReport();
+        setReport(localReport);
+        toast.info('Reporte generado localmente (sin IA)');
+      } catch (localError) {
+        toast.error('Error al generar el reporte. Verificá que tengas datos cargados.');
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const generateLocalReport = async () => {
+    const project = await localStorageService.getProjectById(selectedProject);
+    const projectDatasets = await localStorageService.getDatasets(selectedProject);
+    
+    if (!projectDatasets || projectDatasets.length === 0) {
+      throw new Error('No hay datos');
+    }
+    
+    const dataset = projectDatasets[0];
+    let report = `# 📊 Reporte Estadístico Avanzado: ${project.name}\n\n`;
+    report += `**Nivel:** Superior/Universitario\n`;
+    report += `**Tipo de análisis:** ${project.analysisType || 'univariado'}\n`;
+    report += `**Fecha:** ${new Date().toLocaleDateString('es-AR')}\n\n`;
+    
+    if (dataset.variables && dataset.variables.length > 0) {
+      for (const variable of dataset.variables) {
+        report += `## Variable: ${variable.name}\n\n`;
+        
+        const values = variable.values;
+        const n = values.length;
+        
+        const numericValues = values.map(v => parseFloat(v)).filter(v => !isNaN(v));
+        if (numericValues.length === values.length) {
+          const sum = numericValues.reduce((a, b) => a + b, 0);
+          const mean = sum / n;
+          const sorted = [...numericValues].sort((a, b) => a - b);
+          const median = n % 2 === 0 ? (sorted[n/2-1] + sorted[n/2]) / 2 : sorted[Math.floor(n/2)];
+          const min = Math.min(...numericValues);
+          const max = Math.max(...numericValues);
+          const range = max - min;
+          
+          // Varianza y desviación estándar
+          const variance = numericValues.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / n;
+          const stdDev = Math.sqrt(variance);
+          
+          // Cuartiles
+          const q1 = sorted[Math.floor(n * 0.25)];
+          const q3 = sorted[Math.floor(n * 0.75)];
+          const iqr = q3 - q1;
+          
+          report += `### Estadísticos Descriptivos\n\n`;
+          report += `| Medida | Valor |\n|---|---|\n`;
+          report += `| N | ${n} |\n`;
+          report += `| Media | ${mean.toFixed(4)} |\n`;
+          report += `| Mediana | ${median.toFixed(4)} |\n`;
+          report += `| Desv. Estándar | ${stdDev.toFixed(4)} |\n`;
+          report += `| Varianza | ${variance.toFixed(4)} |\n`;
+          report += `| Mínimo | ${min} |\n`;
+          report += `| Máximo | ${max} |\n`;
+          report += `| Rango | ${range.toFixed(4)} |\n`;
+          report += `| Q1 | ${q1} |\n`;
+          report += `| Q3 | ${q3} |\n`;
+          report += `| IQR | ${iqr.toFixed(4)} |\n\n`;
+        } else {
+          const frequency = {};
+          values.forEach(v => { frequency[v] = (frequency[v] || 0) + 1; });
+          const sorted = Object.entries(frequency).sort((a, b) => b[1] - a[1]);
+          
+          report += `### Distribución de Frecuencias\n\n`;
+          report += `- **N:** ${n}\n`;
+          report += `- **Categorías únicas:** ${Object.keys(frequency).length}\n`;
+          report += `- **Moda:** ${sorted[0][0]}\n\n`;
+          
+          report += `| Categoría | fi | hi | % |\n|---|---|---|---|\n`;
+          sorted.forEach(([cat, freq]) => {
+            report += `| ${cat} | ${freq} | ${(freq/n).toFixed(4)} | ${((freq/n)*100).toFixed(2)}% |\n`;
+          });
+          report += '\n';
+        }
+      }
+    }
+    
+    report += `---\n*Reporte generado localmente sin IA*`;
+    return report;
   };
 
   const copyToClipboard = async () => {
