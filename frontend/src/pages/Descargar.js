@@ -462,31 +462,47 @@ const Descargar = () => {
         
         toast.info('Importando proyecto...');
         
-        // Crear proyecto
-        const projectRes = await axios.post(`${API}/projects`, {
-          name: importedData.project.name + ' (Importado)',
-          description: importedData.project.description,
-          educationLevel: 'primario'
+        // Crear proyecto (mantener nombre original)
+        const newProject = await localStorageService.createProject({
+          name: importedData.project.name,
+          description: importedData.project.description || '',
+          educationLevel: 'primario',
+          analysisType: importedData.project.analysisType || 'univariado'
         });
         
-        const newProjectId = projectRes.data.id;
+        const newProjectId = newProject.id;
         
         // Importar datasets
-        for (const dataset of importedData.datasets) {
-          await axios.post(`${API}/datasets`, {
-            projectId: newProjectId,
-            name: dataset.name,
-            variables: dataset.variables
-          });
+        if (importedData.datasets) {
+          for (const dataset of importedData.datasets) {
+            await localStorageService.createDataset({
+              projectId: newProjectId,
+              name: dataset.name,
+              rawData: dataset.rawData || [],
+              variables: dataset.variables || [],
+              source: 'imported'
+            });
+          }
         }
         
         // Importar estadísticas si existen
         if (importedData.statistics && importedData.statistics.length > 0) {
           for (const stat of importedData.statistics) {
-            await axios.post(`${API}/statistics`, {
+            await localStorageService.saveStatistics({
               projectId: newProjectId,
               variableName: stat.variableName,
               ...stat
+            });
+          }
+        }
+        
+        // Importar reportes si existen
+        if (importedData.reports && importedData.reports.length > 0) {
+          for (const report of importedData.reports) {
+            await localStorageService.saveReport({
+              projectId: newProjectId,
+              content: report.content,
+              educationLevel: 'primario'
             });
           }
         }
