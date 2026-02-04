@@ -140,7 +140,7 @@ const CargaDatosSuperior = () => {
 
     try {
       if (existingDataset) {
-        await axios.delete(`${API}/datasets/project/${currentProjectId}`);
+        await localStorageService.deleteDatasetsByProject(currentProjectId);
       }
 
       const variables = validVars.map(v => {
@@ -175,7 +175,7 @@ const CargaDatosSuperior = () => {
         source: 'manual'
       };
 
-      await axios.post(`${API}/datasets`, dataset);
+      await localStorageService.createDataset(dataset);
       toast.success('Datos guardados exitosamente');
       navigate('/graficos-superior');
     } catch (error) {
