@@ -98,8 +98,7 @@ const Descargar = () => {
 
   const loadProjects = async () => {
     try {
-      const response = await axios.get(`${API}/projects`);
-      const primaryProjects = response.data.filter(p => p.educationLevel === 'primario');
+      const primaryProjects = await localStorageService.getProjects('primario');
       setProjects(primaryProjects);
       
       const currentProjectId = localStorage.getItem('currentProjectId');
@@ -119,26 +118,26 @@ const Descargar = () => {
 
   const loadProjectData = async (projectId) => {
     try {
-      const [projectRes, datasetsRes, statsRes, reportsRes] = await Promise.all([
-        axios.get(`${API}/projects/${projectId}`),
-        axios.get(`${API}/datasets/${projectId}`),
-        axios.get(`${API}/statistics/${projectId}`),
-        axios.get(`${API}/reports/${projectId}`)
+      const [project, datasets, statistics, reports] = await Promise.all([
+        localStorageService.getProjectById(projectId),
+        localStorageService.getDatasets(projectId),
+        localStorageService.getStatistics(projectId),
+        localStorageService.getReports(projectId)
       ]);
 
       setProjectData({
-        project: projectRes.data,
-        datasets: datasetsRes.data,
-        statistics: statsRes.data
+        project: project,
+        datasets: datasets,
+        statistics: statistics
       });
 
-      if (reportsRes.data && reportsRes.data.length > 0) {
-        setConclusions(reportsRes.data[reportsRes.data.length - 1].content);
+      if (reports && reports.length > 0) {
+        setConclusions(reports[reports.length - 1].content);
       } else {
         setConclusions('');
       }
 
-      if (datasetsRes.data.length > 0 && datasetsRes.data[0].variables) {
+      if (datasets.length > 0 && datasets[0].variables) {
         const variable = datasetsRes.data[0].variables[0];
         if (variable && variable.values) {
           const valueCounts = {};
