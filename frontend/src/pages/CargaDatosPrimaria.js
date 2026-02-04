@@ -8,11 +8,13 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
 import localStorageService from '../services/localStorageService';
 
 const CargaDatosPrimaria = () => {
   const navigate = useNavigate();
+  const [projects, setProjects] = useState([]);
   const [currentProjectId, setCurrentProjectId] = useState('');
   const [manualData, setManualData] = useState('');
   const [frequencyData, setFrequencyData] = useState([{ value: '', frequency: '' }]);
@@ -24,10 +26,32 @@ const CargaDatosPrimaria = () => {
   const [recognition, setRecognition] = useState(null);
 
   useEffect(() => {
-    const projectId = localStorage.getItem('currentProjectId');
-    if (projectId) {
-      setCurrentProjectId(projectId);
-      loadExistingData(projectId);
+    loadProjects();
+  }, []);
+
+  const loadProjects = async () => {
+    try {
+      const primaryProjects = await localStorageService.getProjects('primario');
+      setProjects(primaryProjects);
+      
+      const projectId = localStorage.getItem('currentProjectId');
+      // Verificar que el proyecto seleccionado sea del nivel correcto
+      if (projectId && primaryProjects.find(p => p.id === projectId)) {
+        setCurrentProjectId(projectId);
+        loadExistingData(projectId);
+      } else if (primaryProjects.length > 0) {
+        // Seleccionar el primer proyecto de primaria
+        const firstProject = primaryProjects[0].id;
+        setCurrentProjectId(firstProject);
+        localStorage.setItem('currentProjectId', firstProject);
+        loadExistingData(firstProject);
+      } else {
+        toast.error('No hay ninguna misión seleccionada');
+        navigate('/misiones');
+      }
+    } catch (error) {
+      console.error('Error cargando proyectos:', error);
+    }
     } else {
       toast.error('No hay ninguna misión seleccionada');
       navigate('/misiones');
