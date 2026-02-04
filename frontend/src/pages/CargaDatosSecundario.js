@@ -60,18 +60,48 @@ const CargaDatosSecundario = () => {
   const [recognition, setRecognition] = useState(null);
 
   useEffect(() => {
-    const projectId = localStorage.getItem('currentProjectId');
-    if (projectId) {
-      setCurrentProjectId(projectId);
-      loadProjectDetails(projectId);
-      loadExistingData(projectId);
-    } else {
-      toast.error('No hay ningún proyecto seleccionado');
-      navigate('/proyectos-secundario');
-    }
+    loadProjects();
+    initSpeechRecognition();
+  }, []);
 
-    // Inicializar reconocimiento de voz
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+  const loadProjects = async () => {
+    try {
+      const secundarioProjects = await localStorageService.getProjects('secundario');
+      setProjects(secundarioProjects);
+      
+      const projectId = localStorage.getItem('currentProjectId');
+      if (projectId && secundarioProjects.find(p => p.id === projectId)) {
+        setCurrentProjectId(projectId);
+        loadProjectDetails(projectId);
+        loadExistingData(projectId);
+      } else if (secundarioProjects.length > 0) {
+        const firstProject = secundarioProjects[0].id;
+        setCurrentProjectId(firstProject);
+        localStorage.setItem('currentProjectId', firstProject);
+        loadProjectDetails(firstProject);
+        loadExistingData(firstProject);
+      } else {
+        toast.error('No hay ningún proyecto. Creá uno primero.');
+        navigate('/proyectos-secundario');
+      }
+    } catch (error) {
+      console.error('Error cargando proyectos:', error);
+    }
+  };
+
+  const handleProjectChange = (projectId) => {
+    setCurrentProjectId(projectId);
+    localStorage.setItem('currentProjectId', projectId);
+    setManualData('');
+    setVariableName('');
+    setExistingDataset(null);
+    setVoiceTranscript('');
+    setMultiVariables([{ name: '', type: 'cuantitativa_continua', values: '' }]);
+    loadProjectDetails(projectId);
+    loadExistingData(projectId);
+  };
+
+  const initSpeechRecognition = () => {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const recognitionInstance = new SpeechRecognition();
       recognitionInstance.lang = 'es-AR';
