@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
 import {
   PlusCircle,
   FolderOpen,
@@ -15,9 +14,7 @@ import {
 } from 'lucide-react';
 import SidebarSuperior from '../components/SidebarSuperior';
 import Navbar from '../components/Navbar';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+import localStorageService from '../services/localStorageService';
 
 const DashboardSuperior = () => {
   const [projects, setProjects] = useState([]);
@@ -30,8 +27,7 @@ const DashboardSuperior = () => {
 
   const loadProjects = async () => {
     try {
-      const response = await axios.get(`${API}/projects`);
-      const superiorProjects = response.data.filter(p => p.educationLevel === 'superior');
+      const superiorProjects = await localStorageService.getProjects('superior');
       setProjects(superiorProjects);
     } catch (error) {
       console.error('Error cargando proyectos:', error);
