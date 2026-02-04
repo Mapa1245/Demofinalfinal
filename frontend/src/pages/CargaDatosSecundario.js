@@ -279,7 +279,7 @@ const CargaDatosSecundario = () => {
     try {
       // Eliminar datasets existentes si estamos editando
       if (existingDataset) {
-        await axios.delete(`${API}/datasets/project/${currentProjectId}`);
+        await localStorageService.deleteDatasetsByProject(currentProjectId);
       }
 
       const dataset = {
@@ -293,7 +293,7 @@ const CargaDatosSecundario = () => {
         source: 'manual'
       };
 
-      await axios.post(`${API}/datasets`, dataset);
+      await localStorageService.createDataset(dataset);
       toast.success('¡Datos guardados exitosamente!');
       navigate('/graficos-secundario');
     } catch (error) {
@@ -313,7 +313,7 @@ const CargaDatosSecundario = () => {
 
     try {
       if (existingDataset) {
-        await axios.delete(`${API}/datasets/project/${currentProjectId}`);
+        await localStorageService.deleteDatasetsByProject(currentProjectId);
       }
 
       const variables = validVars.map(v => {
