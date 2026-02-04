@@ -11,6 +11,7 @@ import Navbar from '../components/Navbar';
 import { Button } from '../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
+import localStorageService from '../services/localStorageService';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -27,10 +28,13 @@ const Conclusiones = () => {
 
   const loadProjects = async () => {
     try {
-      const response = await axios.get(`${API}/projects`);
-      const primaryProjects = response.data.filter(p => p.educationLevel === 'primario');
+      const primaryProjects = await localStorageService.getProjects('primario');
       setProjects(primaryProjects);
-      if (primaryProjects.length > 0) {
+      
+      const savedProjectId = localStorage.getItem('currentProjectId');
+      if (savedProjectId && primaryProjects.find(p => p.id === savedProjectId)) {
+        setSelectedProject(savedProjectId);
+      } else if (primaryProjects.length > 0) {
         setSelectedProject(primaryProjects[0].id);
       }
     } catch (error) {
