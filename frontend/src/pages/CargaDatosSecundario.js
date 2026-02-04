@@ -102,6 +102,7 @@ const CargaDatosSecundario = () => {
   };
 
   const initSpeechRecognition = () => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const recognitionInstance = new SpeechRecognition();
       recognitionInstance.lang = 'es-AR';
@@ -129,13 +130,7 @@ const CargaDatosSecundario = () => {
 
       setRecognition(recognitionInstance);
     }
-
-    return () => {
-      if (recognition) {
-        recognition.stop();
-      }
-    };
-  }, [navigate]);
+  };
 
   const loadProjectDetails = async (projectId) => {
     try {
