@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
 import {
   PlusCircle,
   FolderOpen,
@@ -14,9 +13,7 @@ import {
 } from 'lucide-react';
 import SidebarSecundario from '../components/SidebarSecundario';
 import Navbar from '../components/Navbar';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+import localStorageService from '../services/localStorageService';
 
 const DashboardSecundario = () => {
   const [projects, setProjects] = useState([]);
@@ -29,8 +26,7 @@ const DashboardSecundario = () => {
 
   const loadProjects = async () => {
     try {
-      const response = await axios.get(`${API}/projects`);
-      const secundarioProjects = response.data.filter(p => p.educationLevel === 'secundario');
+      const secundarioProjects = await localStorageService.getProjects('secundario');
       setProjects(secundarioProjects);
     } catch (error) {
       console.error('Error cargando proyectos:', error);
