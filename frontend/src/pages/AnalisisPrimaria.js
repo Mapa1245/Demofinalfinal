@@ -123,7 +123,7 @@ const AnalisisPrimaria = () => {
     if (numericValues.length === 0) {
       const mode = getMostFrequent(values);
       setStatistics({ mode, type: 'qualitative' });
-      trackAnalysisRun();
+      trackAnalysisCompleted();
       toast.success('¡Cálculo completado! 🎯');
       return;
     }
