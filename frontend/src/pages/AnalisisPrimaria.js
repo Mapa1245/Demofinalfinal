@@ -148,7 +148,7 @@ const AnalisisPrimaria = () => {
     };
 
     setStatistics(stats);
-    trackAnalysisRun();
+    trackAnalysisCompleted();
     toast.success('¡Cálculos completados! 🎯');
   };
 
