@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { 
   PlusCircle, FolderOpen, Trash2, Edit, Play, Upload, 
   FileSpreadsheet, Zap, TrendingUp, GraduationCap
@@ -28,9 +27,7 @@ import {
   DialogTrigger,
 } from '../components/ui/dialog';
 import { toast } from 'sonner';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+import localStorageService from '../services/localStorageService';
 
 const ProyectosSuperior = () => {
   const navigate = useNavigate();
