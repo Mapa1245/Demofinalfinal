@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
 import { 
   Calculator, TrendingUp, BarChart3, ChevronDown, ChevronUp, 
   Sigma, Target, Activity, GitBranch, Percent
@@ -17,9 +16,7 @@ import {
   SelectValue,
 } from '../components/ui/select';
 import { toast } from 'sonner';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+import localStorageService from '../services/localStorageService';
 
 const AnalisisSuperior = () => {
   const [projects, setProjects] = useState([]);
