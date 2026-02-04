@@ -29,6 +29,7 @@ const CargaDatosSecundario = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   
+  const [projects, setProjects] = useState([]);
   const [currentProjectId, setCurrentProjectId] = useState('');
   const [currentProject, setCurrentProject] = useState(null);
   const [analysisType, setAnalysisType] = useState('univariado');
