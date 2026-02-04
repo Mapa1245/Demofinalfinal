@@ -110,11 +110,6 @@ const CargaDatosSuperior = () => {
     }
   };
 
-    return () => {
-      if (recognition) recognition.stop();
-    };
-  }, [navigate]);
-
   const loadProjectDetails = async (projectId) => {
     try {
       const project = await localStorageService.getProjectById(projectId);
