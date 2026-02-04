@@ -29,6 +29,7 @@ const CargaDatosSuperior = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   
+  const [projects, setProjects] = useState([]);
   const [currentProjectId, setCurrentProjectId] = useState('');
   const [currentProject, setCurrentProject] = useState(null);
   const [analysisType, setAnalysisType] = useState('multivariado');
@@ -45,16 +46,46 @@ const CargaDatosSuperior = () => {
   const [variableType, setVariableType] = useState('cuantitativa_continua');
 
   useEffect(() => {
-    const projectId = localStorage.getItem('currentProjectId');
-    if (projectId) {
-      setCurrentProjectId(projectId);
-      loadProjectDetails(projectId);
-      loadExistingData(projectId);
-    } else {
-      toast.error('No hay ningún proyecto seleccionado');
-      navigate('/proyectos-superior');
-    }
+    loadProjects();
+    initSpeechRecognition();
+  }, []);
 
+  const loadProjects = async () => {
+    try {
+      const superiorProjects = await localStorageService.getProjects('superior');
+      setProjects(superiorProjects);
+      
+      const projectId = localStorage.getItem('currentProjectId');
+      if (projectId && superiorProjects.find(p => p.id === projectId)) {
+        setCurrentProjectId(projectId);
+        loadProjectDetails(projectId);
+        loadExistingData(projectId);
+      } else if (superiorProjects.length > 0) {
+        const firstProject = superiorProjects[0].id;
+        setCurrentProjectId(firstProject);
+        localStorage.setItem('currentProjectId', firstProject);
+        loadProjectDetails(firstProject);
+        loadExistingData(firstProject);
+      } else {
+        toast.error('No hay ningún proyecto. Creá uno primero.');
+        navigate('/proyectos-superior');
+      }
+    } catch (error) {
+      console.error('Error cargando proyectos:', error);
+    }
+  };
+
+  const handleProjectChange = (projectId) => {
+    setCurrentProjectId(projectId);
+    localStorage.setItem('currentProjectId', projectId);
+    setExistingDataset(null);
+    setVoiceTranscript('');
+    setMultiVariables([{ name: '', type: 'cuantitativa_continua', values: '' }]);
+    loadProjectDetails(projectId);
+    loadExistingData(projectId);
+  };
+
+  const initSpeechRecognition = () => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const recognitionInstance = new SpeechRecognition();
@@ -77,6 +108,7 @@ const CargaDatosSuperior = () => {
 
       setRecognition(recognitionInstance);
     }
+  };
 
     return () => {
       if (recognition) recognition.stop();
