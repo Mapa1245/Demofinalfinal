@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Calculator, Volume2 } from 'lucide-react';
 import SidebarPrimary from '../components/SidebarPrimary';
 import Navbar from '../components/Navbar';
@@ -15,6 +15,11 @@ const AnalisisPrimaria = () => {
   const [frequencyTable, setFrequencyTable] = useState([]);
   const [statistics, setStatistics] = useState(null);
   const [speaking, setSpeaking] = useState(false);
+
+  const getAnalysisStorageKey = useCallback((projectId) => {
+    if (!projectId) return null;
+    return `analysisPrimaria:${projectId}`;
+  }, []);
 
   useEffect(() => {
     loadProjects();
@@ -42,6 +47,38 @@ const AnalisisPrimaria = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const storageKey = getAnalysisStorageKey(selectedProject);
+    if (!storageKey) return;
+
+    const savedState = localStorage.getItem(storageKey);
+    if (!savedState) return;
+
+    try {
+      const parsedState = JSON.parse(savedState);
+      if (parsedState.statistics) {
+        setStatistics(parsedState.statistics);
+      }
+      if (parsedState.frequencyTable) {
+        setFrequencyTable(parsedState.frequencyTable);
+      }
+    } catch (error) {
+      console.error('Error al leer el estado guardado:', error);
+    }
+  }, [getAnalysisStorageKey, selectedProject]);
+
+  useEffect(() => {
+    const storageKey = getAnalysisStorageKey(selectedProject);
+    if (!storageKey) return;
+
+    const stateToPersist = {
+      statistics,
+      frequencyTable
+    };
+
+    localStorage.setItem(storageKey, JSON.stringify(stateToPersist));
+  }, [frequencyTable, getAnalysisStorageKey, selectedProject, statistics]);
+
   const loadProjects = async () => {
     try {
       const primaryProjects = await localStorageService.getProjects('primario');
@@ -67,8 +104,7 @@ const AnalisisPrimaria = () => {
     try {
       const projectDatasets = await localStorageService.getDatasets(projectId);
       setDatasets(projectDatasets);
-      setStatistics(null);
-      setFrequencyTable([]);
+
       if (projectDatasets.length > 0) {
         calculateFrequencyTable(projectDatasets[0]);
       }

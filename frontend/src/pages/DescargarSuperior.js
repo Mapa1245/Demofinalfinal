@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Download, FileText, Database, Loader2, Check, BarChart3 } from 'lucide-react';
+import { Download, FileText, Database, Loader2, Check } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line } from 'recharts';
 import SidebarSuperior from '../components/SidebarSuperior';
 import Navbar from '../components/Navbar';
 import { Button } from '../components/ui/button';
@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '../components/ui/select';
 import { toast } from 'sonner';
+import localStorageService from '../services/localStorageService';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -59,7 +60,10 @@ const DescargarSuperior = () => {
   const [exportProgress, setExportProgress] = useState('');
   const [chartData, setChartData] = useState([]);
   const [calculatedStats, setCalculatedStats] = useState(null);
+  const [selectedChartType, setSelectedChartType] = useState('bar');
   const chartRef = useRef(null);
+
+  const getChartPreferenceKey = (projectId) => `chartPreference_superior_${projectId}`;
 
   useEffect(() => {
     loadProjects();
@@ -76,12 +80,15 @@ const DescargarSuperior = () => {
       const response = await axios.get(`${API}/projects`);
       setProjects(response.data.filter(p => p.educationLevel === 'superior'));
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error backend, usando datos locales:', error);
+      const superiorProjects = await localStorageService.getProjects('superior');
+      setProjects(superiorProjects);
     }
   };
 
   const loadAllProjectData = async (projectId) => {
     try {
+      setSelectedChartType(localStorage.getItem(getChartPreferenceKey(projectId)) || 'bar');
       const [projectRes, datasetsRes, reportsRes] = await Promise.all([
         axios.get(`${API}/projects/${projectId}`),
         axios.get(`${API}/datasets/${projectId}`),
@@ -105,6 +112,11 @@ const DescargarSuperior = () => {
             name: String(name),
             cantidad: value
           }));
+          let cumulative = 0;
+          processed.forEach(item => {
+            cumulative += item.cantidad;
+            item.acumulada = cumulative;
+          });
           setChartData(processed);
 
           // Calcular estadísticos avanzados
@@ -426,26 +438,40 @@ const DescargarSuperior = () => {
                 </div>
               </div>
 
-              {/* Chart Preview for PDF */}
               {chartData.length > 0 && (
-                <div className="bg-white rounded-2xl p-6 mb-6 border border-emerald-100 shadow-sm">
-                  <h2 className="text-xl font-bold text-emerald-900 mb-4 flex items-center gap-2">
-                    <BarChart3 className="w-6 h-6" />
-                    Vista Previa del Grafico
-                  </h2>
-                  <div ref={chartRef} className="bg-white p-4 rounded-xl">
-                    <ResponsiveContainer width="100%" height={220}>
-                      <BarChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#D1FAE5" />
-                        <XAxis dataKey="name" tick={{ fill: '#065F46', fontSize: 11 }} />
-                        <YAxis tick={{ fill: '#065F46', fontSize: 11 }} />
-                        <Tooltip contentStyle={{ borderRadius: '8px', border: '2px solid #14B8A6' }} />
-                        <Bar dataKey="cantidad" radius={[6, 6, 0, 0]}>
-                          {chartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Bar>
-                      </BarChart>
+                <div className="sr-only" aria-hidden="true">
+                  <div ref={chartRef} className="bg-white p-4 rounded-xl" style={{ width: 900 }}>
+                    <ResponsiveContainer width="100%" height={260}>
+                      {selectedChartType === 'pie' ? (
+                        <PieChart>
+                          <Pie data={chartData} dataKey="cantidad" nameKey="name" cx="50%" cy="50%" outerRadius={110}>
+                            {chartData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      ) : selectedChartType === 'line' || selectedChartType === 'polygon' || selectedChartType === 'cumulative' ? (
+                        <LineChart data={chartData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#D1FAE5" />
+                          <XAxis dataKey="name" tick={{ fill: '#065F46', fontSize: 11 }} />
+                          <YAxis tick={{ fill: '#065F46', fontSize: 11 }} />
+                          <Tooltip />
+                          <Line type="monotone" dataKey={selectedChartType === 'cumulative' ? 'acumulada' : 'cantidad'} stroke="#10B981" strokeWidth={3} />
+                        </LineChart>
+                      ) : (
+                        <BarChart data={chartData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#D1FAE5" />
+                          <XAxis dataKey="name" tick={{ fill: '#065F46', fontSize: 11 }} />
+                          <YAxis tick={{ fill: '#065F46', fontSize: 11 }} />
+                          <Tooltip />
+                          <Bar dataKey="cantidad" radius={[6, 6, 0, 0]}>
+                            {chartData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      )}
                     </ResponsiveContainer>
                   </div>
                 </div>

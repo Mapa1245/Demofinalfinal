@@ -11,6 +11,7 @@ import localStorageService from '../services/localStorageService';
 const COLORS = ['#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B', '#10B981'];
 
 const GraficosPrimaria = () => {
+  const getChartPreferenceKey = (projectId) => `chartPreference_primario_${projectId}`;
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState('');
   const [datasets, setDatasets] = useState([]);
@@ -55,10 +56,14 @@ const GraficosPrimaria = () => {
       const currentProjectId = localStorage.getItem('currentProjectId');
       if (currentProjectId && primaryProjects.find(p => p.id === currentProjectId)) {
         setSelectedProject(currentProjectId);
+        const savedChartType = localStorage.getItem(getChartPreferenceKey(currentProjectId));
+        if (savedChartType) setChartType(savedChartType);
         loadDatasets(currentProjectId);
       } else if (primaryProjects.length > 0) {
         const firstProject = primaryProjects[0].id;
         setSelectedProject(firstProject);
+        const savedChartType = localStorage.getItem(getChartPreferenceKey(firstProject));
+        if (savedChartType) setChartType(savedChartType);
         localStorage.setItem('currentProjectId', firstProject);
         loadDatasets(firstProject);
       }
@@ -108,11 +113,16 @@ const GraficosPrimaria = () => {
     setSelectedProject(projectId);
     localStorage.setItem('currentProjectId', projectId);
     window.dispatchEvent(new CustomEvent('projectChanged', { detail: projectId }));
+    const savedChartType = localStorage.getItem(getChartPreferenceKey(projectId));
+    if (savedChartType) setChartType(savedChartType);
     loadDatasets(projectId);
   };
 
   const handleChartTypeChange = (type) => {
     setChartType(type);
+    if (selectedProject) {
+      localStorage.setItem(getChartPreferenceKey(selectedProject), type);
+    }
     trackChartCreated(type);
   };
 

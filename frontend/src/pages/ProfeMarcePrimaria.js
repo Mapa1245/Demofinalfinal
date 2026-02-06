@@ -160,7 +160,7 @@ const ProfeMarcePrimaria = () => {
                         <span className="font-bold text-orange-900 text-sm sm:text-base">Profe Marce</span>
                       </div>
                     )}
-                    <div className={`prose prose-sm sm:prose-lg max-w-none ${msg.role === 'user' ? 'text-white' : 'text-gray-800'}`}>
+                                        <div className={`prose prose-sm sm:prose-lg max-w-none break-words overflow-wrap-anywhere ${msg.role === 'user' ? 'text-white' : 'text-gray-800'}`}>
                       {msg.role === 'assistant' ? (
                         <ReactMarkdown
                           remarkPlugins={[remarkMath, remarkGfm]}

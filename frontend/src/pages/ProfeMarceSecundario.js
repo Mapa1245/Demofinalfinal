@@ -163,7 +163,7 @@ Estoy acá para ayudarte a entender conceptos estadísticos, resolver dudas sobr
                     )}
                   </div>
                   
-                  <div className={`max-w-[75%] rounded-2xl px-4 py-3 ${
+                                   <div className={`max-w-[75%] rounded-2xl px-4 py-3 break-words overflow-wrap-anywhere ${
                     msg.role === 'user'
                       ? 'bg-purple-600 text-white'
                       : 'bg-purple-50 text-gray-800'

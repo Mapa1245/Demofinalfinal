@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Download, FileText, Database, Loader2, Check, BarChart3 } from 'lucide-react';
+import { Download, FileText, Database, Loader2, Check } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, LineChart, Line } from 'recharts';
 import SidebarSecundario from '../components/SidebarSecundario';
 import Navbar from '../components/Navbar';
 import { Button } from '../components/ui/button';
@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '../components/ui/select';
 import { toast } from 'sonner';
+import localStorageService from '../services/localStorageService';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -61,8 +62,10 @@ const DescargarSecundario = () => {
   const [exportProgress, setExportProgress] = useState('');
   const [chartData, setChartData] = useState([]);
   const [calculatedStats, setCalculatedStats] = useState(null);
+  const [selectedChartType, setSelectedChartType] = useState('bar');
   const contentRef = useRef(null);
   const chartRef = useRef(null);
+  const getChartPreferenceKey = (projectId) => `chartPreference_secundario_${projectId}`;
 
   useEffect(() => {
     loadProjects();
@@ -84,27 +87,57 @@ const DescargarSecundario = () => {
       const secundarioProjects = response.data.filter(p => p.educationLevel === 'secundario');
       setProjects(secundarioProjects);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error backend, usando datos locales:', error);
+      const secundarioProjects = await localStorageService.getProjects('secundario');
+      setProjects(secundarioProjects);
     }
   };
 
   const loadAllProjectData = async (projectId) => {
     try {
-      const [projectRes, datasetsRes, statsRes, reportsRes] = await Promise.all([
-        axios.get(`${API}/projects/${projectId}`),
-        axios.get(`${API}/datasets/${projectId}`),
-        axios.get(`${API}/statistics/${projectId}`),
-        axios.get(`${API}/reports/${projectId}`)
-      ]);
+      setSelectedChartType(localStorage.getItem(getChartPreferenceKey(projectId)) || 'bar');
 
-      setCurrentProject(projectRes.data);
-      setDatasets(datasetsRes.data);
-      setStatistics(statsRes.data);
-      setReports(reportsRes.data);
+      let projectData;
+      let datasetsData;
+      let statsData;
+      let reportsData;
+
+      try {
+        const [projectRes, datasetsRes, statsRes, reportsRes] = await Promise.all([
+          axios.get(`${API}/projects/${projectId}`),
+          axios.get(`${API}/datasets/${projectId}`),
+          axios.get(`${API}/statistics/${projectId}`),
+          axios.get(`${API}/reports/${projectId}`)
+        ]);
+
+        projectData = projectRes.data;
+        datasetsData = datasetsRes.data;
+        statsData = statsRes.data;
+        reportsData = reportsRes.data;
+      } catch (backendError) {
+        console.error('Error cargando backend, usando localStorage:', backendError);
+        const [project, datasets, stats, reports] = await Promise.all([
+          localStorageService.getProjectById(projectId),
+          localStorageService.getDatasets(projectId),
+          localStorageService.getStatistics(projectId),
+          localStorageService.getReports(projectId)
+        ]);
+
+
+        projectData = project;
+        datasetsData = datasets;
+        statsData = stats;
+        reportsData = reports;
+      }
+
+      setCurrentProject(projectData);
+      setDatasets(datasetsData);
+      setStatistics(statsData);
+      setReports(reportsData);
 
       // Preparar datos para gráfico
-      if (datasetsRes.data.length > 0 && datasetsRes.data[0].variables) {
-        const variable = datasetsRes.data[0].variables[0];
+      if (datasetsData.length > 0 && datasetsData[0].variables) {
+        const variable = datasetsData[0].variables[0];
         if (variable && variable.values) {
           // Crear tabla de frecuencias para el gráfico
           const valueCounts = {};
@@ -117,6 +150,11 @@ const DescargarSecundario = () => {
             cantidad: value,
             value: value
           }));
+          let cumulative = 0;
+          processed.forEach(item => {
+            cumulative += item.cantidad;
+            item.acumulada = cumulative;
+          });
           setChartData(processed);
 
           // Calcular estadísticos
@@ -252,10 +290,18 @@ const DescargarSecundario = () => {
 
           const imgData = canvas.toDataURL('image/png');
           const imgWidth = pageWidth - 2 * margin;
-          const imgHeight = (canvas.height * imgWidth) / canvas.width;
-          
-          pdf.addImage(imgData, 'PNG', margin, yPosition, imgWidth, Math.min(imgHeight, 80));
-          yPosition += Math.min(imgHeight, 80) + 10;
+          let imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+          if (imgHeight > pageHeight - 50) {
+            imgHeight = pageHeight - 50;
+          }
+          if (yPosition + imgHeight > pageHeight - 15) {
+            pdf.addPage();
+            yPosition = margin;
+          }
+
+          pdf.addImage(imgData, 'PNG', margin, yPosition, imgWidth, imgHeight);
+          yPosition += imgHeight + 10;
         } catch (chartError) {
           console.error('Error capturando grafico:', chartError);
         }
@@ -467,26 +513,40 @@ const DescargarSecundario = () => {
                 </div>
               </div>
 
-              {/* Chart Preview for PDF */}
               {chartData.length > 0 && (
-                <div className="bg-white rounded-2xl p-6 mb-6 border border-purple-100 shadow-sm">
-                  <h2 className="text-xl font-bold text-purple-900 mb-4 flex items-center gap-2">
-                    <BarChart3 className="w-6 h-6" />
-                    Vista Previa del Grafico (se incluira en el PDF)
-                  </h2>
-                  <div ref={chartRef} className="bg-white p-4 rounded-xl">
-                    <ResponsiveContainer width="100%" height={250}>
-                      <BarChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#E9D5FF" />
-                        <XAxis dataKey="name" tick={{ fill: '#6B21A8', fontSize: 11 }} />
-                        <YAxis tick={{ fill: '#6B21A8', fontSize: 11 }} />
-                        <Tooltip contentStyle={{ borderRadius: '8px', border: '2px solid #8B5CF6' }} />
-                        <Bar dataKey="cantidad" fill="#8B5CF6" radius={[6, 6, 0, 0]}>
-                          {chartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Bar>
-                      </BarChart>
+                <div aria-hidden="true" style={{ position: 'fixed', left: '-10000px', top: 0, width: '1200px', zIndex: -1 }}>
+                  <div ref={chartRef} className="bg-white p-6 rounded-xl" style={{ width: 1200 }}>
+                    <ResponsiveContainer width="100%" height={260}>
+                      {selectedChartType === 'pie' ? (
+                        <PieChart>
+                          <Pie data={chartData} dataKey="cantidad" nameKey="name" cx="50%" cy="50%" outerRadius={110}>
+                            {chartData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      ) : selectedChartType === 'line' || selectedChartType === 'polygon' || selectedChartType === 'cumulative' ? (
+                        <LineChart data={chartData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#E9D5FF" />
+                          <XAxis dataKey="name" tick={{ fill: '#6B21A8', fontSize: 11 }} />
+                          <YAxis tick={{ fill: '#6B21A8', fontSize: 11 }} />
+                          <Tooltip />
+                          <Line type="monotone" dataKey={selectedChartType === 'cumulative' ? 'acumulada' : 'cantidad'} stroke="#8B5CF6" strokeWidth={3} />
+                        </LineChart>
+                      ) : (
+                        <BarChart data={chartData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#E9D5FF" />
+                          <XAxis dataKey="name" tick={{ fill: '#6B21A8', fontSize: 11 }} />
+                          <YAxis tick={{ fill: '#6B21A8', fontSize: 11 }} />
+                          <Tooltip />
+                          <Bar dataKey="cantidad" radius={[6, 6, 0, 0]}>
+                            {chartData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      )}
                     </ResponsiveContainer>
                   </div>
                 </div>

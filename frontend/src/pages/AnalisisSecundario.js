@@ -36,6 +36,11 @@ const AnalisisSecundario = () => {
   const [decileValue, setDecileValue] = useState(5);
   const [quartileValue, setQuartileValue] = useState(2);
 
+  const getAnalysisStorageKey = useCallback((projectId, variableName) => {
+    if (!projectId || !variableName) return null;
+    return `analysisSecundario:${projectId}:${variableName}`;
+  }, []);
+
   useEffect(() => {
     loadProjects();
     const currentProjectId = localStorage.getItem('currentProjectId');
@@ -50,6 +55,84 @@ const AnalisisSecundario = () => {
       loadDatasets(selectedProject);
     }
   }, [selectedProject]);
+
+ useEffect(() => {
+    const storageKey = getAnalysisStorageKey(selectedProject, selectedVariable);
+    if (!storageKey) return;
+
+    const savedState = localStorage.getItem(storageKey);
+    if (!savedState) return;
+
+    try {
+      const parsedState = JSON.parse(savedState);
+      if (parsedState.advancedStats) {
+        setAdvancedStats(parsedState.advancedStats);
+      }
+      if (parsedState.basicStats) {
+        setBasicStats(parsedState.basicStats);
+      }
+      if (parsedState.frequencyTable) {
+        setFrequencyTable(parsedState.frequencyTable);
+      }
+      if (parsedState.freqTableType) {
+        setFreqTableType(parsedState.freqTableType);
+      }
+      if (typeof parsedState.numIntervals === 'number') {
+        setNumIntervals(parsedState.numIntervals);
+      }
+      if (typeof parsedState.useSturgess === 'boolean') {
+        setUseSturgess(parsedState.useSturgess);
+      }
+      if (typeof parsedState.percentileValue === 'number') {
+        setPercentileValue(parsedState.percentileValue);
+      }
+      if (typeof parsedState.decileValue === 'number') {
+        setDecileValue(parsedState.decileValue);
+      }
+      if (typeof parsedState.quartileValue === 'number') {
+        setQuartileValue(parsedState.quartileValue);
+      }
+      if (typeof parsedState.showAdvancedStats === 'boolean') {
+        setShowAdvancedStats(parsedState.showAdvancedStats);
+      }
+    } catch (error) {
+      console.error('Error al leer el estado guardado:', error);
+    }
+  }, [getAnalysisStorageKey, selectedProject, selectedVariable]);
+
+  useEffect(() => {
+    const storageKey = getAnalysisStorageKey(selectedProject, selectedVariable);
+    if (!storageKey) return;
+
+    const stateToPersist = {
+      advancedStats,
+      basicStats,
+      frequencyTable,
+      freqTableType,
+      numIntervals,
+      useSturgess,
+      percentileValue,
+      decileValue,
+      quartileValue,
+      showAdvancedStats
+    };
+
+    localStorage.setItem(storageKey, JSON.stringify(stateToPersist));
+  }, [
+    advancedStats,
+    basicStats,
+    decileValue,
+    freqTableType,
+    frequencyTable,
+    getAnalysisStorageKey,
+    numIntervals,
+    percentileValue,
+    quartileValue,
+    selectedProject,
+    selectedVariable,
+    showAdvancedStats,
+    useSturgess
+  ]);
 
   const loadProjects = async () => {
     try {
@@ -328,7 +411,7 @@ const AnalisisSecundario = () => {
   const handleProjectChange = (projectId) => {
     setSelectedProject(projectId);
     localStorage.setItem('currentProjectId', projectId);
-    setAdvancedStats({});
+
   };
 
   const handleVariableChange = (varName) => {
@@ -337,7 +420,7 @@ const AnalisisSecundario = () => {
     if (variable) {
       calculateAll(variable);
     }
-    setAdvancedStats({});
+
   };
 
   return (

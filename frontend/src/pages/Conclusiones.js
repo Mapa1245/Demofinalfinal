@@ -26,6 +26,26 @@ const Conclusiones = () => {
     loadProjects();
   }, []);
 
+    useEffect(() => {
+    if (selectedProject) {
+      loadLatestReport(selectedProject);
+    }
+  }, [selectedProject]);
+
+  const loadLatestReport = async (projectId) => {
+    try {
+      const reports = await localStorageService.getReports(projectId);
+      if (reports && reports.length > 0) {
+        setReport(reports[reports.length - 1].content || '');
+      } else {
+        setReport('');
+      }
+    } catch (error) {
+      console.error('Error cargando reporte:', error);
+      setReport('');
+    }
+  };
+
   const loadProjects = async () => {
     try {
       const primaryProjects = await localStorageService.getProjects('primario');
@@ -71,6 +91,11 @@ const Conclusiones = () => {
       try {
         const localReport = await generateLocalConclusions();
         setReport(localReport);
+         await localStorageService.saveReport({
+          projectId: selectedProject,
+          content: localReport,
+          educationLevel: 'primario'
+        });
         toast.info('Conclusiones generadas localmente (sin IA)');
       } catch (localError) {
         console.error('Error generando conclusiones locales:', localError);

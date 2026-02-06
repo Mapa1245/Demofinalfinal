@@ -25,6 +25,7 @@ import localStorageService from '../services/localStorageService';
 const COLORS = ['#10B981', '#14B8A6', '#06B6D4', '#3B82F6', '#6366F1', '#8B5CF6', '#EC4899', '#F59E0B'];
 
 const GraficosSuperior = () => {
+  const getChartPreferenceKey = (projectId) => `chartPreference_superior_${projectId}`;
   const dashboardRef = useRef(null);
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState('');
@@ -238,6 +239,9 @@ const GraficosSuperior = () => {
       emoji: selectedEmoji
     };
     setDashboardCharts([...dashboardCharts, newChart]);
+    if (selectedProject) {
+      localStorage.setItem(getChartPreferenceKey(selectedProject), chartType);
+    }
     toast.success('Gráfico agregado');
   };
 

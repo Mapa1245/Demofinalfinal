@@ -66,8 +66,11 @@ const Descargar = () => {
   const [projectData, setProjectData] = useState(null);
   const [conclusions, setConclusions] = useState('');
   const [chartData, setChartData] = useState([]);
+  const [selectedChartType, setSelectedChartType] = useState('bar');
   const chartRef = useRef(null);
   const conclusionsRef = useRef(null);
+
+  const getChartPreferenceKey = (projectId) => `chartPreference_primario_${projectId}`;
 
   useEffect(() => {
     loadProjects();
@@ -118,6 +121,7 @@ const Descargar = () => {
 
   const loadProjectData = async (projectId) => {
     try {
+      setSelectedChartType(localStorage.getItem(getChartPreferenceKey(projectId)) || 'bar');
       const [project, datasets, statistics, reports] = await Promise.all([
         localStorageService.getProjectById(projectId),
         localStorageService.getDatasets(projectId),
@@ -150,6 +154,11 @@ const Descargar = () => {
             cantidad: value,
             value: value
           }));
+          let cumulative = 0;
+          processed.forEach(item => {
+            cumulative += item.cantidad;
+            item.acumulada = cumulative;
+          });
           setChartData(processed);
         }
       }
@@ -223,10 +232,18 @@ const Descargar = () => {
 
           const imgData = canvas.toDataURL('image/png');
           const imgWidth = pageWidth - 40;
-          const imgHeight = (canvas.height * imgWidth) / canvas.width;
-          
-          pdf.addImage(imgData, 'PNG', 20, yPosition, imgWidth, Math.min(imgHeight, 70));
-          yPosition += Math.min(imgHeight, 70) + 10;
+          let imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+          if (imgHeight > pageHeight - 50) {
+            imgHeight = pageHeight - 50;
+          }
+          if (yPosition + imgHeight > pageHeight - 15) {
+            pdf.addPage();
+            yPosition = 20;
+          }
+
+          pdf.addImage(imgData, 'PNG', 20, yPosition, imgWidth, imgHeight);
+          yPosition += imgHeight + 10;
         } catch (chartError) {
           console.error('Error capturando grafico:', chartError);
         }
@@ -322,86 +339,19 @@ const Descargar = () => {
 
         pdf.setTextColor(0, 0, 0);
 
-        // Capturar conclusiones con LaTeX renderizado
-        if (conclusionsRef.current) {
-          try {
-            const conclusionsCanvas = await html2canvas(conclusionsRef.current, {
-              scale: 2,
-              backgroundColor: '#ffffff',
-              logging: false,
-              useCORS: true
-            });
-            
-            const conclusionsImgData = conclusionsCanvas.toDataURL('image/png');
-            const conclusionsImgWidth = pageWidth - 40;
-            const conclusionsImgHeight = (conclusionsCanvas.height * conclusionsImgWidth) / conclusionsCanvas.width;
-            
-            // Dividir en páginas si es necesario
-            let remainingHeight = conclusionsImgHeight;
-            let sourceY = 0;
-            
-            while (remainingHeight > 0) {
-              const availableHeight = pageHeight - yPosition - 15;
-              const heightToAdd = Math.min(remainingHeight, availableHeight);
-              
-              if (heightToAdd > 0) {
-                pdf.addImage(
-                  conclusionsImgData,
-                  'PNG',
-                  20,
-                  yPosition,
-                  conclusionsImgWidth,
-                  heightToAdd,
-                  undefined,
-                  'FAST',
-                  0,
-                  sourceY
-                );
-              }
-              
-              remainingHeight -= heightToAdd;
-              sourceY += heightToAdd;
-              
-              if (remainingHeight > 0) {
-                pdf.addPage();
-                yPosition = 20;
-              } else {
-                yPosition += heightToAdd + 10;
-              }
-            }
-          } catch (conclusionsError) {
-            console.error('Error capturando conclusiones:', conclusionsError);
-            // Fallback a texto plano
-            pdf.setFontSize(10);
-            pdf.setFont('helvetica', 'normal');
-            const cleanReport = cleanTextForPDF(conclusions);
-            const reportLines = pdf.splitTextToSize(cleanReport, pageWidth - 40);
-            
-            reportLines.forEach(line => {
-              if (yPosition > pageHeight - 15) {
-                pdf.addPage();
-                yPosition = 20;
-              }
-              pdf.text(line, 20, yPosition);
-              yPosition += 5;
-            });
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'normal');
+        const cleanReport = cleanTextForPDF(conclusions);
+        const reportLines = pdf.splitTextToSize(cleanReport, pageWidth - 40);
+
+        reportLines.forEach(line => {
+          if (yPosition > pageHeight - 15) {
+            pdf.addPage();
+            yPosition = 20;
           }
-        } else {
-          // Si no hay ref, usar texto plano
-          pdf.setFontSize(10);
-          pdf.setFont('helvetica', 'normal');
-          const cleanReport = cleanTextForPDF(conclusions);
-          const reportLines = pdf.splitTextToSize(cleanReport, pageWidth - 40);
-          
-          reportLines.forEach(line => {
-            if (yPosition > pageHeight - 15) {
-              pdf.addPage();
-              yPosition = 20;
-            }
-            pdf.text(line, 20, yPosition);
-            yPosition += 5;
-          });
-        }
+          pdf.text(line, 20, yPosition);
+          yPosition += 5;
+        });
       }
 
       // Footer
@@ -558,23 +508,32 @@ const Descargar = () => {
             </div>
           )}
 
-          {/* Chart Preview */}
           {chartData.length > 0 && (
-            <div className="bg-white rounded-3xl p-6 mb-8 border-4 border-pink-200">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">Vista Previa del Grafico</h3>
-              <div ref={chartRef} className="bg-white p-4 rounded-xl">
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#FCE7F3" />
-                    <XAxis dataKey="name" tick={{ fill: '#831843', fontSize: 11 }} />
-                    <YAxis tick={{ fill: '#831843', fontSize: 11 }} />
-                    <Tooltip contentStyle={{ borderRadius: '12px', border: '2px solid #EC4899' }} />
-                    <Bar dataKey="cantidad" radius={[8, 8, 0, 0]}>
-                      {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
+            <div aria-hidden="true" style={{ position: 'fixed', left: '-10000px', top: 0, width: '1200px', zIndex: -1 }}>
+              <div ref={chartRef} className="bg-white p-6 rounded-xl" style={{ width: 1200 }}>
+                <ResponsiveContainer width="100%" height={300}>
+                  {selectedChartType === 'pie' ? (
+                    <PieChart>
+                      <Pie data={chartData} dataKey="cantidad" nameKey="name" cx="50%" cy="50%" outerRadius={120}>
+                        {chartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  ) : (
+                    <BarChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#FCE7F3" />
+                      <XAxis dataKey="name" tick={{ fill: '#831843', fontSize: 11 }} />
+                      <YAxis tick={{ fill: '#831843', fontSize: 11 }} />
+                      <Tooltip contentStyle={{ borderRadius: '12px', border: '2px solid #EC4899' }} />
+                      <Bar dataKey="cantidad" radius={[8, 8, 0, 0]}>
+                        {chartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  )}
                 </ResponsiveContainer>
               </div>
             </div>

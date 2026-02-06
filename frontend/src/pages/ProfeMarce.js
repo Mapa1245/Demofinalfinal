@@ -148,7 +148,7 @@ const ProfeMarce = () => {
                     </div>
                   )}
                   {msg.role === 'assistant' ? (
-                    <div className="prose prose-sm max-w-none">
+                    <div className="prose prose-sm max-w-none break-words overflow-wrap-anywhere">
                       <ReactMarkdown
                         remarkPlugins={[remarkMath, remarkGfm]}
                         rehypePlugins={[rehypeKatex]}

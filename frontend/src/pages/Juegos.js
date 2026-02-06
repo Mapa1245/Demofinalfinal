@@ -6,6 +6,7 @@ import { Button } from '../components/ui/button';
 import { toast } from 'sonner';
 
 const Juegos = () => {
+  const memoryCardTypes = ['📊', '📈', '📉', '🥧', '📋', '🎯'];
   const [currentGame, setCurrentGame] = useState(null);
   const [score, setScore] = useState(0);
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -114,8 +115,7 @@ const Juegos = () => {
 
   // MEMORY GAME
   const initMemoryGame = () => {
-    const cardTypes = ['📊', '📈', '📉', '🥧', '📋', '🎯'];
-    const cards = [...cardTypes, ...cardTypes].sort(() => Math.random() - 0.5);
+  const cards = [...memoryCardTypes, ...memoryCardTypes].sort(() => Math.random() - 0.5);
     setMemoryCards(cards.map((type, idx) => ({ id: idx, type, flipped: false })));
     setFlipped([]);
     setMatched([]);
@@ -135,7 +135,7 @@ const Juegos = () => {
         toast.success('¡Par encontrado! +10 puntos 🎉');
         setFlipped([]);
         
-        if (matched.length + 1 === cardTypes.length) {
+        if (matched.length + 1 === memoryCardTypes.length) {
           setTimeout(() => {
             toast.success('¡Juego completado! 🏆');
             setCurrentGame(null);

@@ -54,6 +54,11 @@ const AnalisisSuperior = () => {
   const [percentileValue, setPercentileValue] = useState(50);
   const [confidenceLevel, setConfidenceLevel] = useState(95);
   const [hypothesisValue, setHypothesisValue] = useState(0);
+  
+  const getAnalysisStorageKey = useCallback((projectId, variableName) => {
+    if (!projectId || !variableName) return null;
+    return `analysisSuperior:${projectId}:${variableName}`;
+  }, []);
 
   useEffect(() => {
     loadProjects();
@@ -69,6 +74,79 @@ const AnalisisSuperior = () => {
       loadDatasets(selectedProject);
     }
   }, [selectedProject]);
+
+   useEffect(() => {
+    const storageKey = getAnalysisStorageKey(selectedProject, selectedVariable);
+    if (!storageKey) return;
+
+    const savedState = localStorage.getItem(storageKey);
+    if (!savedState) return;
+
+    try {
+      const parsedState = JSON.parse(savedState);
+      if (parsedState.advancedStats) {
+        setAdvancedStats(parsedState.advancedStats);
+      }
+      if (parsedState.basicStats) {
+        setBasicStats(parsedState.basicStats);
+      }
+      if (parsedState.frequencyTable) {
+        setFrequencyTable(parsedState.frequencyTable);
+      }
+      if (parsedState.freqTableType) {
+        setFreqTableType(parsedState.freqTableType);
+      }
+      if (typeof parsedState.numIntervals === 'number') {
+        setNumIntervals(parsedState.numIntervals);
+      }
+      if (typeof parsedState.useSturgess === 'boolean') {
+        setUseSturgess(parsedState.useSturgess);
+      }
+      if (typeof parsedState.percentileValue === 'number') {
+        setPercentileValue(parsedState.percentileValue);
+      }
+      if (typeof parsedState.confidenceLevel === 'number') {
+        setConfidenceLevel(parsedState.confidenceLevel);
+      }
+      if (typeof parsedState.hypothesisValue === 'number') {
+        setHypothesisValue(parsedState.hypothesisValue);
+      }
+    } catch (error) {
+      console.error('Error al leer el estado guardado:', error);
+    }
+  }, [getAnalysisStorageKey, selectedProject, selectedVariable]);
+
+  useEffect(() => {
+    const storageKey = getAnalysisStorageKey(selectedProject, selectedVariable);
+    if (!storageKey) return;
+
+    const stateToPersist = {
+      advancedStats,
+      basicStats,
+      frequencyTable,
+      freqTableType,
+      numIntervals,
+      useSturgess,
+      percentileValue,
+      confidenceLevel,
+      hypothesisValue
+    };
+
+    localStorage.setItem(storageKey, JSON.stringify(stateToPersist));
+  }, [
+    advancedStats,
+    basicStats,
+    confidenceLevel,
+    freqTableType,
+    frequencyTable,
+    getAnalysisStorageKey,
+    hypothesisValue,
+    numIntervals,
+    percentileValue,
+    selectedProject,
+    selectedVariable,
+    useSturgess
+  ]); 
 
   const loadProjects = async () => {
     try {
@@ -604,7 +682,7 @@ const AnalisisSuperior = () => {
   const handleProjectChange = (projectId) => {
     setSelectedProject(projectId);
     localStorage.setItem('currentProjectId', projectId);
-    setAdvancedStats({});
+
   };
 
   const handleVariableChange = (varName) => {
@@ -613,7 +691,7 @@ const AnalisisSuperior = () => {
     if (variable) {
       calculateAll(variable);
     }
-    setAdvancedStats({});
+
   };
 
   const toggleSection = (section) => {

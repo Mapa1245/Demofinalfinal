@@ -26,6 +26,7 @@ import localStorageService from '../services/localStorageService';
 const COLORS = ['#8B5CF6', '#6366F1', '#3B82F6', '#06B6D4', '#10B981', '#F59E0B', '#EF4444', '#EC4899'];
 
 const GraficosSecundario = () => {
+  const getChartPreferenceKey = (projectId) => `chartPreference_secundario_${projectId}`;
   const dashboardRef = useRef(null);
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState('');
@@ -198,6 +199,9 @@ const GraficosSecundario = () => {
     };
 
     setDashboardCharts([...dashboardCharts, newChart]);
+    if (selectedProject) {
+      localStorage.setItem(getChartPreferenceKey(selectedProject), chartType);
+    }
     toast.success('Gráfico agregado al dashboard');
   };
 
